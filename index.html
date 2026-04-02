@@ -1217,21 +1217,22 @@
       planeMat.uniforms.u_texture.value = foldTexture;
     }
 
-    /* Render a painting image covering the full fold canvas */
-    function renderImageFoldTexture(img) {
+    /* Render a painting image covering the full fold canvas.
+       yOffset: CSS translateY currently applied to the image (px, negative = shifted up) */
+    function renderImageFoldTexture(img, yOffset) {
       var dpr = Math.min(window.devicePixelRatio, 2);
       var w = Math.round(window.innerWidth * dpr);
       var h = Math.round(window.innerHeight * dpr);
       offCanvas.width = w;
       offCanvas.height = h;
-      /* Draw image covering full canvas (like background-size: cover) */
       var imgW = img.naturalWidth || img.width || w;
       var imgH = img.naturalHeight || img.height || h;
-      var scale = Math.max(w / imgW, h / imgH);
-      var drawW = imgW * scale;
+      /* width:100% in CSS means image is scaled to viewport width */
+      var scale = w / imgW;
+      var drawW = w;
       var drawH = imgH * scale;
-      var dx = (w - drawW) / 2;
-      var dy = (h - drawH) / 2;
+      var dx = 0;
+      var dy = (yOffset || 0) * dpr;
       offCtx.fillStyle = '#000';
       offCtx.fillRect(0, 0, w, h);
       try { offCtx.drawImage(img, dx, dy, drawW, drawH); } catch(e) {}
@@ -2088,8 +2089,12 @@
 
       if (modalName) modalName.style.display = 'none';
 
-      /* Render painting onto fold texture */
-      renderImageFoldTexture(clickedImg);
+      /* Render painting onto fold texture at centred position */
+      var imgW = clickedImg.naturalWidth || 1;
+      var imgH = clickedImg.naturalHeight || 1;
+      var renderedH = imgH * (vw / imgW);
+      var centreY = renderedH > vh ? -((renderedH - vh) / 2) : 0;
+      renderImageFoldTexture(clickedImg, centreY);
 
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
@@ -2156,8 +2161,9 @@
       var vw = window.innerWidth;
       var vh = window.innerHeight;
 
-      /* Re-render painting onto fold for reverse */
-      renderImageFoldTexture(tileObj.img);
+      /* Re-render painting at current pan position so fold matches what's on screen */
+      var currentY = gsap.getProperty(lightboxImg, 'y') || 0;
+      renderImageFoldTexture(tileObj.img, currentY);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
