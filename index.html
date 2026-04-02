@@ -2126,9 +2126,14 @@
         }
       }, 0);
 
-      /* 2. When fold completes — atomic swap: hide WebGL, show image */
+      /* 2. When fold completes — atomic swap: hide WebGL, show image at centre */
       lightboxTl.add(function() {
         lightbox.classList.add('is-active');
+        /* Match the centred position the fold was showing */
+        var imgH = lightboxImg.naturalHeight * (window.innerWidth / lightboxImg.naturalWidth);
+        var vh = window.innerHeight;
+        var centreOffset = imgH > vh ? -((imgH - vh) / 2) : 0;
+        gsap.set(lightboxImg, { y: centreOffset });
         lightboxImg.style.opacity = '1';
         webglCanvas.style.visibility = 'hidden';
       }, foldDur);
@@ -2268,16 +2273,20 @@
     /* Click anywhere on the lightbox or image to close */
     lightbox.addEventListener('click', closeLightbox);
 
-    /* Mouse pan — move mouse up/down to see top/bottom of painting */
+    /* Mouse pan — move mouse up/down to see top/bottom of painting.
+       Mouse at centre of screen = centred view (where the fold ended).
+       Mouse at top = see top of painting. Mouse at bottom = see bottom. */
     document.addEventListener('mousemove', function(e) {
       if (!lightboxPanEnabled || !lightboxOpen) return;
       var vh = window.innerHeight;
-      var imgH = lightboxImg.offsetHeight;
-      if (imgH <= vh) return; /* no pan needed if image fits */
+      var imgW = lightboxImg.naturalWidth || 1;
+      var imgH = lightboxImg.naturalHeight || 1;
+      var renderedH = imgH * (window.innerWidth / imgW);
+      if (renderedH <= vh) return;
+      var maxShift = renderedH - vh;
       var mouseY = e.clientY / vh; /* 0 at top, 1 at bottom */
-      var maxShift = imgH - vh;
       var shift = -mouseY * maxShift;
-      gsap.to(lightboxImg, { y: shift, duration: 0.6, ease: 'power2.out', overwrite: true });
+      gsap.to(lightboxImg, { y: shift, duration: 0.8, ease: 'power2.out', overwrite: true });
     });
 
   })();
