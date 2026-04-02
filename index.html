@@ -466,19 +466,18 @@
       position: fixed;
       inset: 0;
       z-index: 910;
-      background: rgba(0,0,0,0.8);
       overflow: hidden;
       pointer-events: none;
       cursor: pointer;
-      opacity: 0;
     }
     .lightbox.is-active { pointer-events: auto; }
     .lightbox__img {
-      position: fixed;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       object-position: center center;
-      z-index: 915;
-      border-radius: 2px;
     }
     .lightbox__caption {
       position: fixed;
@@ -2080,6 +2079,8 @@
       var src = clickedImg.src || clickedImg.dataset.src;
       var caption = getCaptionForSrc(src);
       var rect = clickedTile.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
 
       lightboxImg.src = src;
       lightboxCaption.textContent = caption;
@@ -2087,42 +2088,38 @@
 
       if (modalName) modalName.style.display = 'none';
 
-      /* Position image exactly at the tile */
-      gsap.set(lightboxImg, {
-        left: rect.left, top: rect.top,
-        width: rect.width, height: rect.height,
-        opacity: 1, borderRadius: '2px',
-        objectPosition: 'center center'
-      });
-      gsap.set(lightboxCaption, { opacity: 0, y: 20 });
-      gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
-      gsap.set(lightboxCounter, { opacity: 0 });
-      panTarget.yPct = 50;
+      /* The PHOTO goes on the fold texture */
+      renderImageFoldTexture(clickedImg, 0);
 
-      /* WebGL fold behind — solid colour background, same as profile card */
-      var bgColour = getAvgColour(clickedImg);
-      renderFoldTexture(bgColour, bgColour, [], 0, 0);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
-      planeMat.uniforms.u_screen.value.set(window.innerWidth, window.innerHeight);
+      planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_opacity.value = 1.0;
-      planeMat.uniforms.u_anchor.value.set(-window.innerWidth * 0.25, window.innerHeight * 0.25);
+      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
       transitionProxy.progress = 0;
       planeMat.uniforms.u_progress.value = 0;
       webglCanvas.style.visibility = 'visible';
       renderWebGL();
+
+      gsap.set(lightboxCaption, { opacity: 0, y: 20 });
+      gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
+      gsap.set(lightboxCounter, { opacity: 0 });
+      panTarget.yPct = 50;
+      lightboxImg.style.objectPosition = 'center 50%';
 
       var foldDur = 1.8;
 
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() {
+          /* Swap: show real image, hide WebGL */
+          lightbox.classList.add('is-active');
+          webglCanvas.style.visibility = 'hidden';
           lightboxAnimating = false;
           lightboxPanEnabled = true;
-          webglCanvas.style.visibility = 'hidden';
         }
       });
 
-      /* 1. WebGL fold expands behind — the cool paper transition */
+      /* Photo folds from tile to fullscreen */
       lightboxTl.to(transitionProxy, {
         progress: 1, duration: foldDur, ease: 'power2.out',
         onUpdate: function() {
@@ -2131,27 +2128,11 @@
         }
       }, 0);
 
-      /* 2. Image expands from tile to fill viewport ON TOP of the fold */
-      lightboxTl.to(lightboxImg, {
-        left: 0, top: 0,
-        width: '100vw', height: '100vh',
-        borderRadius: '0px',
-        duration: foldDur * 0.8, ease: 'power2.out'
-      }, 0);
-
-      /* 3. Show lightbox overlay at ~50% */
-      lightboxTl.add(function() { lightbox.classList.add('is-active'); }, foldDur * 0.5);
-
-      /* 4. Fade out the WebGL fold as it completes */
-      lightboxTl.to(planeMat.uniforms.u_opacity, {
-        value: 0, duration: 0.4, onUpdate: renderWebGL
-      }, foldDur * 0.75);
-
-      /* 5. Caption + controls */
-      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, foldDur * 0.7);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur * 0.7);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur * 0.75);
-      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, foldDur * 0.7);
+      /* Caption + controls appear near end */
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, foldDur * 0.75);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur * 0.75);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur * 0.8);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, foldDur * 0.75);
     }
 
     function closeLightbox() {
@@ -2162,44 +2143,50 @@
 
       var tileObj = allPaintingTiles[currentLightboxIdx];
       var rect = tileObj.tile.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+
+      /* Render fold texture at current pan position */
+      var currentPanPct = panTarget.yPct || 50;
+      var imgW = tileObj.img.naturalWidth || 1;
+      var imgH = tileObj.img.naturalHeight || 1;
+      var scale = Math.max(vw / imgW, vh / imgH);
+      var drawH = imgH * scale;
+      var maxOffset = drawH - vh;
+      var panOffset = maxOffset > 0 ? -(currentPanPct / 100) * maxOffset : 0;
+      renderImageFoldTexture(tileObj.img, panOffset);
+
+      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
+      planeMat.uniforms.u_screen.value.set(vw, vh);
+      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
+      transitionProxy.progress = 1;
+      planeMat.uniforms.u_progress.value = 1;
+      planeMat.uniforms.u_opacity.value = 1;
+
+      /* Swap: show WebGL, hide lightbox */
+      webglCanvas.style.visibility = 'visible';
+      renderWebGL();
+      lightbox.classList.remove('is-active');
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
+
+      var foldDur = 1.8;
 
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() {
           lightboxAnimating = false;
-          lightbox.classList.remove('is-active');
-          gsap.set(lightbox, { opacity: 0 });
-          gsap.set(lightboxImg, { opacity: 0, width: 0, height: 0 });
+          webglCanvas.style.visibility = 'hidden';
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
 
-      /* WebGL fold behind for close */
-      var bgColour = getAvgColour(tileObj.img);
-      renderFoldTexture(bgColour, bgColour, [], 0, 0);
-      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
-      planeMat.uniforms.u_screen.value.set(window.innerWidth, window.innerHeight);
-      planeMat.uniforms.u_anchor.value.set(-window.innerWidth * 0.25, window.innerHeight * 0.25);
-      transitionProxy.progress = 1;
-      planeMat.uniforms.u_progress.value = 1;
-      planeMat.uniforms.u_opacity.value = 1;
-      webglCanvas.style.visibility = 'visible';
-      renderWebGL();
-
-      var foldDur = 1.8;
-
-      /* 1. Fade out caption + controls */
+      /* Fade out caption + controls */
       lightboxTl.to(lightboxCaption, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0);
 
-      /* 2. Hide dark overlay */
-      lightboxTl.add(function() { lightbox.classList.remove('is-active'); }, 0.1);
-      lightboxTl.to(lightbox, { opacity: 0, duration: 0.3 }, 0.1);
-
-      /* 3. WebGL fold collapses behind */
+      /* Photo folds from fullscreen back to tile */
       lightboxTl.to(transitionProxy, {
         progress: 0, duration: foldDur, ease: 'power3.inOut',
         onUpdate: function() {
@@ -2207,23 +2194,8 @@
           planeMat.uniforms.u_cardRect.value.set(liveRect.left, liveRect.top, liveRect.width, liveRect.height);
           planeMat.uniforms.u_progress.value = transitionProxy.progress;
           renderWebGL();
-        },
-        onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
+        }
       }, 0.1);
-
-      /* 4. Image shrinks back to tile ON TOP of the fold */
-      lightboxTl.to(lightboxImg, {
-        left: rect.left, top: rect.top,
-        width: rect.width, height: rect.height,
-        borderRadius: '2px',
-        objectPosition: 'center center',
-        duration: foldDur * 0.8, ease: 'power3.inOut'
-      }, 0.1);
-
-      /* 5. Fade image as it reaches tile */
-      lightboxTl.to(lightboxImg, {
-        opacity: 0, duration: 0.3, ease: 'power2.in'
-      }, foldDur * 0.7);
     }
 
     function navigateLightbox(dir) {
