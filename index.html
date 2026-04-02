@@ -2096,10 +2096,8 @@
       planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_opacity.value = 1.0;
 
-      /* Anchor direction: from tile toward screen centre */
-      var tileCx = (rect.left + rect.width / 2) / vw - 0.5;
-      var tileCy = -((rect.top + rect.height / 2) / vh - 0.5);
-      planeMat.uniforms.u_anchor.value.set(-tileCx, -tileCy);
+      /* Same anchor bias as profile card */
+      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
 
       transitionProxy.progress = 0;
       planeMat.uniforms.u_progress.value = 0;
@@ -2109,50 +2107,47 @@
       /* Prep lightbox behind the fold */
       lightbox.style.background = bgColour;
       gsap.set(lightbox, { clipPath: 'inset(0% 0% 0% 0%)' });
-      gsap.set(lightboxImg, {
-        left: (vw - vw * 0.55) / 2, top: (vh - vh * 0.75) / 2 - 15,
-        width: 'auto', height: 'auto',
-        maxWidth: '55vw', maxHeight: '75vh',
-        opacity: 0, position: 'fixed',
-        left: '50%', top: '50%',
-        transform: 'translate(-50%, -50%)'
-      });
+      gsap.set(lightboxImg, { opacity: 0 });
       gsap.set(lightboxCaption, { opacity: 0, y: 20 });
       gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
       gsap.set(lightboxCounter, { opacity: 0 });
+
+      /* Same fold duration + easing as profile card */
+      var foldDur = 1.8;
 
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() { lightboxAnimating = false; }
       });
 
-      /* 1. WebGL fold expands from tile to fullscreen */
+      /* 1. WebGL fold expands — same as profile card */
       lightboxTl.to(transitionProxy, {
-        progress: 1, duration: 1.0, ease: 'power3.inOut',
+        progress: 1, duration: foldDur, ease: 'power2.out',
         onUpdate: function() {
           planeMat.uniforms.u_progress.value = transitionProxy.progress;
           renderWebGL();
         }
       }, 0);
 
-      /* 2. At ~65%, show the lightbox behind and start fading in real content */
+      /* 2. Show lightbox behind at ~60% of fold */
       lightboxTl.add(function() {
         lightbox.classList.add('is-active');
-      }, 0.6);
+      }, foldDur * 0.55);
 
-      /* 3. Fade out WebGL, fade in lightbox content */
+      /* 3. Crossfade: WebGL out, real content in — at ~70% of fold */
+      var fadeAt = foldDur * 0.65;
       lightboxTl.to(planeMat.uniforms.u_opacity, {
-        value: 0, duration: 0.3,
+        value: 0, duration: 0.4,
         onUpdate: renderWebGL,
         onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
-      }, 0.75);
-      lightboxTl.to(lightboxImg, { opacity: 1, duration: 0.35, ease: 'power2.out' }, 0.75);
+      }, fadeAt);
+      lightboxTl.to(lightboxImg, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt);
 
-      /* 4. Caption + controls */
-      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.85);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.85);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.9);
-      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, 0.85);
+      /* 4. Caption + controls — near end of fold */
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, fadeAt + 0.2);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt + 0.2);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt + 0.3);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, fadeAt + 0.2);
     }
 
     function closeLightbox() {
@@ -2170,51 +2165,64 @@
       renderImageFoldTexture(tileObj.img, bgColour);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
-      var tileCx = (rect.left + rect.width / 2) / vw - 0.5;
-      var tileCy = -((rect.top + rect.height / 2) / vh - 0.5);
-      planeMat.uniforms.u_anchor.value.set(-tileCx, -tileCy);
+      /* Same anchor bias as profile card */
+      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
+
+      planeMat.uniforms.u_progress.value = 1;
+      planeMat.uniforms.u_opacity.value = 0;
+      transitionProxy.progress = 1;
+      renderWebGL();
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
+
+      /* Same fold duration as profile card */
+      var foldDur = 1.8;
+      var foldStart = 0.2;
 
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() {
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
+          webglCanvas.style.visibility = 'hidden';
           gsap.set(lightboxImg, { clearProps: 'all' });
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
 
-      /* 1. Fade out caption + controls */
-      lightboxTl.to(lightboxCaption, { opacity: 0, y: 10, duration: 0.2, ease: 'power2.in' }, 0);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
-      lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
+      /* 1. Fade out caption + controls quickly */
+      lightboxTl.to(lightboxCaption, { opacity: 0, y: 10, duration: 0.3, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
 
-      /* 2. Fade out lightbox content, show WebGL */
-      lightboxTl.to(lightboxImg, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.1);
+      /* 2. Fade out lightbox, show WebGL fold surface */
+      lightboxTl.to(lightboxImg, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0.05);
       lightboxTl.add(function() {
-        transitionProxy.progress = 1;
-        planeMat.uniforms.u_progress.value = 1;
-        planeMat.uniforms.u_opacity.value = 1;
         webglCanvas.style.visibility = 'visible';
-        renderWebGL();
-      }, 0.3);
+      }, 0.1);
+      lightboxTl.to(planeMat.uniforms.u_opacity, {
+        value: 1, duration: 0.2, ease: 'power1.in',
+        onUpdate: renderWebGL
+      }, 0.1);
 
-      /* 3. WebGL fold collapses back to tile */
+      /* 3. Hide lightbox behind fold */
+      lightboxTl.add(function() {
+        lightbox.classList.remove('is-active');
+      }, 0.35);
+
+      /* 4. WebGL fold collapses — same timing as profile card close */
       lightboxTl.to(transitionProxy, {
-        progress: 0, duration: 0.9, ease: 'power3.inOut',
+        progress: 0, duration: foldDur, ease: 'power3.inOut',
         onUpdate: function() {
-          planeMat.uniforms.u_progress.value = transitionProxy.progress;
+          var p = transitionProxy.progress;
+          /* Track live tile position */
+          var liveRect = tileObj.tile.getBoundingClientRect();
+          planeMat.uniforms.u_cardRect.value.set(liveRect.left, liveRect.top, liveRect.width, liveRect.height);
+          planeMat.uniforms.u_progress.value = p;
           renderWebGL();
         },
         onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
-      }, 0.35);
-
-      /* 4. Hide lightbox at end */
-      lightboxTl.add(function() {
-        lightbox.classList.remove('is-active');
-      }, 0.9);
+      }, foldStart);
     }
 
     function navigateLightbox(dir) {
