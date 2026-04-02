@@ -473,12 +473,11 @@
     .lightbox.is-active { pointer-events: auto; }
     .lightbox__img {
       position: absolute;
-      left: 0; top: 0;
+      inset: 0;
       width: 100%;
-      height: auto;
-      min-height: 100%;
+      height: 100%;
       object-fit: cover;
-      will-change: transform;
+      object-position: center center;
     }
     .lightbox__caption {
       position: fixed;
@@ -525,7 +524,7 @@
       .lightbox__close { top: 3rem; right: 3rem; }
       .lightbox__counter { bottom: 3rem; right: 3rem; }
       .lightbox__caption { bottom: 3rem; font-size: 14px; }
-      .lightbox__img { width: 100%; min-height: 100vh; }
+      .lightbox__img { width: 100%; height: 100%; }
     }
 
     /* Focus */
@@ -1227,11 +1226,11 @@
       offCanvas.height = h;
       var imgW = img.naturalWidth || img.width || w;
       var imgH = img.naturalHeight || img.height || h;
-      /* width:100% in CSS means image is scaled to viewport width */
-      var scale = w / imgW;
-      var drawW = w;
+      /* Match object-fit: cover — scale to fill, then offset */
+      var scale = Math.max(w / imgW, h / imgH);
+      var drawW = imgW * scale;
       var drawH = imgH * scale;
-      var dx = 0;
+      var dx = (w - drawW) / 2;
       var dy = (yOffset || 0) * dpr;
       offCtx.fillStyle = '#000';
       offCtx.fillRect(0, 0, w, h);
@@ -2089,11 +2088,12 @@
 
       if (modalName) modalName.style.display = 'none';
 
-      /* Render painting onto fold texture at centred position */
+      /* Render painting onto fold texture at centred position (object-fit: cover) */
       var imgW = clickedImg.naturalWidth || 1;
       var imgH = clickedImg.naturalHeight || 1;
-      var renderedH = imgH * (vw / imgW);
-      var centreY = renderedH > vh ? -((renderedH - vh) / 2) : 0;
+      var coverScale = Math.max(vw / imgW, vh / imgH);
+      var coveredH = imgH * coverScale;
+      var centreY = coveredH > vh ? -((coveredH - vh) / 2) : 0;
       renderImageFoldTexture(clickedImg, centreY);
 
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
@@ -2107,7 +2107,8 @@
       renderWebGL();
 
       /* Keep image hidden until fold is done */
-      gsap.set(lightboxImg, { y: 0, opacity: 0 });
+      lightboxImg.style.opacity = '0';
+      lightboxImg.style.objectPosition = 'center 50%';
       gsap.set(lightboxCaption, { opacity: 0, y: 20 });
       gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
       gsap.set(lightboxCounter, { opacity: 0 });
@@ -2131,14 +2132,11 @@
         }
       }, 0);
 
-      /* 2. When fold completes — atomic swap: hide WebGL, show image at centre */
+      /* 2. When fold completes — atomic swap: hide WebGL, show image */
       lightboxTl.add(function() {
         lightbox.classList.add('is-active');
-        /* Match the centred position the fold was showing */
-        var imgH = lightboxImg.naturalHeight * (window.innerWidth / lightboxImg.naturalWidth);
-        var vh = window.innerHeight;
-        var centreOffset = imgH > vh ? -((imgH - vh) / 2) : 0;
-        gsap.set(lightboxImg, { y: centreOffset });
+        lightboxImg.style.objectPosition = 'center 50%';
+        panTarget.yPct = 50;
         lightboxImg.style.opacity = '1';
         webglCanvas.style.visibility = 'hidden';
       }, foldDur);
@@ -2161,9 +2159,18 @@
       var vw = window.innerWidth;
       var vh = window.innerHeight;
 
-      /* Re-render painting at current pan position so fold matches what's on screen */
-      var currentY = gsap.getProperty(lightboxImg, 'y') || 0;
-      renderImageFoldTexture(tileObj.img, currentY);
+      /* Re-render painting at current pan position so fold matches screen */
+      var currentPanPct = panTarget.yPct || 50;
+      /* Convert object-position % to a pixel offset for the fold texture */
+      var imgW = tileObj.img.naturalWidth || 1;
+      var imgH = tileObj.img.naturalHeight || 1;
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var scale = Math.max(vw / imgW, vh / imgH);
+      var drawH = imgH * scale;
+      var maxOffset = drawH - vh;
+      var panOffset = maxOffset > 0 ? -(currentPanPct / 100) * maxOffset : 0;
+      renderImageFoldTexture(tileObj.img, panOffset);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
@@ -2182,7 +2189,8 @@
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
           webglCanvas.style.visibility = 'hidden';
-          gsap.set(lightboxImg, { y: 0, opacity: 0 });
+          lightboxImg.style.opacity = '0';
+          lightboxImg.style.objectPosition = 'center 50%';
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
@@ -2190,7 +2198,7 @@
       /* 1. Instant swap: hide image + lightbox, show WebGL fullscreen painting */
       lightboxTl.add(function() {
         lightboxImg.style.opacity = '0';
-        gsap.set(lightboxImg, { y: 0 });
+        lightboxImg.style.objectPosition = 'center 50%';
         lightbox.classList.remove('is-active');
         webglCanvas.style.visibility = 'visible';
         renderWebGL();
@@ -2279,20 +2287,21 @@
     /* Click anywhere on the lightbox or image to close */
     lightbox.addEventListener('click', closeLightbox);
 
-    /* Mouse pan — move mouse up/down to see top/bottom of painting.
-       Mouse at centre of screen = centred view (where the fold ended).
-       Mouse at top = see top of painting. Mouse at bottom = see bottom. */
+    /* Mouse pan — move mouse up/down to shift object-position.
+       Mouse at top = see top of painting. Mouse at bottom = see bottom.
+       Smooth interpolation via GSAP. */
+    var panTarget = { yPct: 50 };
     document.addEventListener('mousemove', function(e) {
       if (!lightboxPanEnabled || !lightboxOpen) return;
-      var vh = window.innerHeight;
-      var imgW = lightboxImg.naturalWidth || 1;
-      var imgH = lightboxImg.naturalHeight || 1;
-      var renderedH = imgH * (window.innerWidth / imgW);
-      if (renderedH <= vh) return;
-      var maxShift = renderedH - vh;
-      var mouseY = e.clientY / vh; /* 0 at top, 1 at bottom */
-      var shift = -mouseY * maxShift;
-      gsap.to(lightboxImg, { y: shift, duration: 0.8, ease: 'power2.out', overwrite: true });
+      var mouseY = e.clientY / window.innerHeight; /* 0 at top, 1 at bottom */
+      var targetPct = mouseY * 100;
+      panTarget.yPct = targetPct;
+      gsap.to(panTarget, {
+        yPct: targetPct, duration: 0.8, ease: 'power2.out', overwrite: true,
+        onUpdate: function() {
+          lightboxImg.style.objectPosition = 'center ' + panTarget.yPct + '%';
+        }
+      });
     });
 
   })();
