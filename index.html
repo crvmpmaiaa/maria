@@ -473,10 +473,11 @@
     .lightbox.is-active { pointer-events: auto; visibility: visible; }
     .lightbox__img {
       position: fixed;
-      object-fit: contain;
+      object-fit: cover;
       border-radius: 2px;
-      z-index: 911;
+      z-index: 950;
       will-change: transform, left, top, width, height;
+      pointer-events: none;
     }
     .lightbox__caption {
       position: fixed;
@@ -2202,7 +2203,7 @@
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
           webglCanvas.style.visibility = 'hidden';
-          gsap.set(lightboxImg, { clearProps: 'all' });
+          gsap.set(lightboxImg, { opacity: 0, width: 0, height: 0 });
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
