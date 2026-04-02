@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="format-detection" content="telephone=no">
+  <title>Jack Crump — Mobile Photography</title>
+  <meta property="og:title" content="Jack Crump — Mobile Photography">
+  <meta property="description" content="Mobile photographer exploring light, landscape, and the world in between.">
+  <meta property="og:description" content="Mobile photographer exploring light, landscape, and the world in between.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_gb">
+  <link rel="canonical" href="https://jackcrump.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Jack Crump",
+    "jobTitle": "Mobile Photographer",
+    "description": "Mobile photographer exploring light, landscape, and the world in between."
+  }
+  </script>
+  <style>
+    /* Reset */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{line-height:1.15;-webkit-text-size-adjust:100%}
+    body{font-family:system-ui,sans-serif}
+    img,video{display:block;max-width:100%;height:auto}
+    a{color:inherit;text-decoration:inherit}
+    button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;border-radius:0;-webkit-appearance:none;appearance:none}
+    ol,ul{list-style:none}
+    h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+    a,button:not(.close){pointer-events:all}
+
+    /* Base */
+    :root {
+      --size: 1920;
+      --theme-1: #2A2725;
+      --theme-2: #2A2725;
+      --bg: #ffffff;
+      --card-bg: #D4CEC7;
+    }
+    @media(orientation:portrait){ :root{--size:1000} }
+    @media(orientation:portrait) and (max-width:550px){ :root{--size:750} }
+    @media(orientation:portrait) and (max-width:440px){ :root{--size:500} }
+
+    html {
+      font-size: calc(100vw / var(--size) * 10);
+      -webkit-text-size-adjust: none;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body,html {
+      overscroll-behavior: none;
+      width:100%;height:100%;min-width:100%;min-height:100%;
+      overflow:hidden;
+    }
+    body {
+      font-size:1.6rem;
+      line-height:1.1;
+      background-color: var(--bg);
+    }
+    .font-1 { font-family: 'Cormorant Garamond', serif; }
+    .font-2 { font-family: 'Space Grotesk', sans-serif; }
+    .theme-1 { color: var(--theme-1); }
+    .theme-2 { color: var(--theme-2); }
+
+    /* Viewport height fix */
+    .vh { height: calc(var(--vh, 1vh) * 100); }
+
+    /* Intro overlay — solid cover from first paint, no flicker */
+    .intro-cover {
+      position: fixed;
+      inset: 0;
+      background: var(--card-bg);
+      z-index: 900;
+    }
+
+    /* Film grain overlay — must be in root stacking context, above everything */
+    .grain {
+      position:fixed;
+      top:0;left:0;
+      width:100%;height:100%;
+      z-index:9999;
+      pointer-events:none;
+      opacity:0.03;
+    }
+
+    /* Grid */
+    .grid-wrap {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+    .grid-track {
+      display: flex;
+      flex-wrap: nowrap;
+      /* Push outer columns off the edges — ~30% of a column width bleeds off each side */
+      width: calc(100% + 8vw);
+      margin-left: -4vw;
+    }
+    .grid-col {
+      width: 20%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+      padding: 0 0.7rem;
+      content-visibility: visible;
+    }
+
+    /* Tile */
+    .tile {
+      position: relative;
+      will-change: transform;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+    .tile img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .tile img.is-loaded { opacity: 1; }
+
+    /* Name/content card tiles */
+    .tile--card {
+      display: flex;
+      flex-direction: column;
+      padding: 2.5rem;
+      cursor: pointer;
+      transition: background-color 0.6s ease, color 0.6s ease;
+    }
+    .tile--card h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: 5.5rem;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      color: var(--theme-1);
+      transition: color 0.6s ease;
+    }
+    .tile--card h2.card-name {
+      font-size: 13rem;
+      line-height: 0.85;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: 1rem;
+    }
+    .tile--card h2.card-name .card-name__line {
+      display: block;
+      overflow: hidden;
+      padding-bottom: 0.08em;
+    }
+    .tile--card h2.card-name .js-name-wave {
+      display: inline-block;
+    }
+    .tile--card .card-divider {
+      display: none;
+    }
+    .tile--card:not(.js-open-modal) h2 {
+      padding-top: 0.8rem;
+      color: #FFFFFF;
+    }
+    .tile--card:not(.js-open-modal) .card-text {
+      margin-top: 1rem;
+      color: #FFFFFF;
+    }
+    .tile--card .card-text-wrap {
+      margin-top: auto;
+      overflow: hidden;
+    }
+    .tile--card .card-link-wrap {
+      overflow: hidden;
+      margin-top: 2rem;
+    }
+    .tile--card .card-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      font-size: 1.8rem;
+      line-height: 1.35;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--theme-2);
+      transition: color 0.6s ease;
+    }
+    .tile--card .card-link {
+      display: block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      font-size: 1.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--theme-1);
+      position: relative;
+      transition: color 0.6s ease;
+    }
+    .tile--card .card-link::before {
+      content:'';position:absolute;bottom:0;left:0;width:100%;
+      transform-origin:left;transform:scaleX(0);
+      border-top:1px solid currentColor;
+      transition:transform 0.7s cubic-bezier(.19,1,.22,1);
+    }
+    .tile--card:hover .card-link::before {
+      transform:scaleX(1);
+    }
+
+    /* Mobile: 3 columns instead of 5 */
+    @media(orientation:portrait) and (max-width:550px){
+      .grid-col:nth-child(1),
+      .grid-col:nth-child(5) {
+        display: none;
+      }
+      .grid-col {
+        width: 33.33%;
+        margin-top: 12vh;
+      }
+      .grid-track {
+        width: calc(100% + 6vw);
+        margin-left: -3vw;
+      }
+      .tile--card { padding:1.2rem; }
+      .tile--card h2 { font-size:3.2rem; }
+      .tile--card h2.card-name { font-size:4.5rem; }
+      .tile--card .card-text { font-size:1rem; line-height:1.3; }
+      .tile--card .card-link { font-size:0.9rem; }
+      .tile--card .card-link-wrap { margin-top:0.6rem; }
+      .tile--card .card-text-wrap { margin-top:auto; padding-top:0.8rem; }
+      .tile--card:not(.js-open-modal) h2 { padding-top:0.8rem; }
+      .tile--card:not(.js-open-modal) .card-text { margin-top:1rem; }
+    }
+
+    /* Footer */
+    .footer-bar {
+      position: fixed;
+      bottom: 5rem;
+      left: 0; right: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .footer-bar ul {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: all;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      padding: 0 5rem;
+    }
+    @media(orientation:portrait) and (max-width:440px){
+      .footer-bar { bottom: 3rem; }
+      .footer-bar ul { padding:0 3rem; justify-content:space-between; }
+    }
+
+    /* Button hover animation */
+    .btn {
+      --p1:1em;--p2:1.8em;--p3:1em;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;white-space:nowrap;
+      height:2.25em;padding:0 var(--p1);
+      color:transparent;margin:0 .4em;
+      font-size:12px;
+    }
+    .btn__outer {
+      position:absolute;top:0;left:50%;height:100%;width:auto;
+      transform:translateX(-50%);
+      padding:0 var(--p3) 0 var(--p2);
+      pointer-events:none;
+      display:flex;align-items:center;
+    }
+    .btn__outer .label {
+      font-size:0.8em;
+      color:var(--theme-1);
+      transition:color 0.6s ease;
+    }
+    .btn__mask {
+      position:absolute;display:flex;align-items:center;justify-content:center;
+    }
+    .btn__mask.--1 {
+      padding:.1em var(--p3) 0 var(--p2);
+      top:0;left:0;bottom:0;right:0;
+      background:var(--theme-1);color:var(--bg);
+      clip-path: inset(100% 0 0 0);
+      transition: clip-path 0.7s cubic-bezier(.19,1,.22,1), background-color 0.6s ease, color 0.6s ease;
+    }
+    .btn__mask.--1 span { font-size:0.8em; }
+    .btn:hover .btn__mask.--1,
+    .btn:focus-visible .btn__mask.--1 {
+      clip-path: inset(0 0 0 0);
+    }
+    .btn__mask.--2 {
+      top:-1px;left:-1px;bottom:-1px;right:-1px;
+      background:var(--bg);color:var(--theme-1);
+      padding-top:.1em;
+      opacity:0;
+      transition: background-color 0.6s ease, color 0.6s ease;
+    }
+    @media(min-width:1280px){ .btn { font-size:16px; } }
+    @media(min-width:2000px){ .btn { font-size:18px; } }
+
+    /* Copyright */
+    .copyright {
+      position:fixed;
+      right:5rem; bottom:5rem;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:1.8rem;
+      text-transform:uppercase;
+      color:var(--theme-1);
+      z-index:100;
+      transform:translateY(50%);
+      transition:color 0.6s ease;
+    }
+    @media(orientation:portrait) and (max-width:440px){
+      .copyright { right:3rem; bottom:7rem; font-size:1.4rem; }
+    }
+
+    /* Modal */
+    .modal {
+      position:fixed;inset:0;
+      z-index:800;
+      background: var(--card-bg);
+      pointer-events:none;
+      display:flex;
+      font-family:'Space Grotesk',sans-serif;
+      overflow-y:auto;
+      visibility:hidden;
+      opacity:0;
+    }
+    .modal.is-open { pointer-events:all; visibility:visible; opacity:1; }
+
+    /* Modal name — fixed top-left, large like the reference (15vw) */
+    .modal__name {
+      position:fixed;
+      top:5rem;left:5rem;
+      z-index:900;
+      pointer-events:none;
+      visibility:hidden;
+      opacity:0;
+    }
+    .modal__name h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: 15vw;
+      line-height: 0.85;
+      letter-spacing: -0.04em;
+      color: var(--theme-1);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal__name .js-name-line {
+      padding-bottom: 0.08em;
+    }
+    .modal__name .js-name-char {
+      display: inline-block;
+    }
+
+    /* 3D canvas — left half, behind the name */
+    .modal__3d {
+      position:fixed;
+      top:0;left:0;
+      width:50%;height:100%;
+      z-index:1;
+      pointer-events:none;
+    }
+
+    /* Content — centered narrow column, clear of the name text */
+    .modal__content {
+      margin-top: 37.5vh;
+      display:flex;flex-direction:column;align-items:center;
+      width:30%;margin-left:auto;margin-right:auto;
+      text-align:left;
+    }
+    @media(min-height:525px){ .modal__content { margin-top:calc(var(--vh,1vh)*35); } }
+    @media(min-height:701px){ .modal__content { margin-top:calc(var(--vh,1vh)*37.5); } }
+    .modal__skill {
+      display:flex;align-items:flex-start;
+      font-size:4rem;letter-spacing:-0.035em;
+      color:var(--theme-1);overflow:hidden;
+      transition:color 0.6s ease;
+    }
+    .modal__skill-num {
+      position:relative;display:flex;align-items:center;justify-content:center;
+      height:1.75em;min-width:1.75em;
+      margin-top:0.4em;margin-right:0.65em;
+      font-size:0.35em;
+      border-radius:9999px;border:1px solid currentColor;
+      padding-right:1px;
+    }
+    .modal__bio { margin-top:5rem; width:100%; }
+    .modal__bio p {
+      font-size:1.8rem;text-transform:uppercase;
+      color:var(--theme-1);line-height:1.15;letter-spacing:-0.025em;
+      transition:color 0.6s ease;
+    }
+    .modal__bio p + p { margin-top:3rem; }
+    .modal__close {
+      position:fixed;top:5rem;right:5rem;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:20px;text-transform:uppercase;cursor:pointer;
+      color:var(--theme-1);z-index:10;
+      transition:color 0.6s ease, opacity 0.3s ease;
+    }
+    .modal__close:hover { opacity:0.6; }
+    .modal__copy {
+      position:fixed;right:5rem;bottom:5rem;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:1.8rem;text-transform:uppercase;
+      color:var(--theme-1);
+      transform:translateY(50%);
+      transition:color 0.6s ease;
+    }
+    .modal__credit {
+      position:fixed;left:5rem;bottom:5rem;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:1.8rem;
+      color:var(--theme-1);
+      transform:translateY(50%);
+      transition:color 0.6s ease;
+      text-decoration:none;
+    }
+    @media(orientation:portrait){
+      .modal__name { top:3rem;left:3rem; }
+      .modal__name h2 { font-size: 18vw; }
+      .modal__3d { width:100%;height:50%;top:0;bottom:auto;left:0; }
+      .modal__content { width:100%;margin-left:0;margin-right:0;padding:0 5rem;margin-top:42vh; }
+      .modal__skill { font-size:3rem; }
+    }
+    @media(orientation:portrait) and (max-width:440px){
+      .modal__name h2 { font-size: 22vw; }
+      .modal__content { padding:0 3rem;margin-top:38vh; }
+      .modal__skill { font-size:2.4rem; }
+      .modal__close { top:3rem;right:3rem; }
+      .modal__copy { right:3rem;bottom:7rem; }
+      .modal__credit { left:3rem;bottom:7rem;font-size:1.4rem; }
+    }
+
+    /* Focus */
+    .btn:focus-visible,
+    .tile--card .card-link:focus-visible {
+      outline: 2px solid var(--theme-1);
+      outline-offset: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="intro-cover js-intro-cover"></div>
+  <div style="position:fixed;inset:0" class="font-1">
+
+    <!-- Photo Grid -->
+    <div class="grid-wrap js-grid-wrap">
+      <div class="grid-track js-grid-track">
+        <!-- Column 1 -->
+        <div class="grid-col">
+          <div class="tile"><img data-src="assets/images/IMG_1312.jpeg" alt="Snow-covered alpine peaks"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0535.jpeg" alt="Red bicycle against timber logs"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0673.jpeg" alt="Winter tree-lined road"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3403.jpeg" alt="Mosque interior dome"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3936.jpeg" alt="Tree framing sunset over water"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0715.jpeg" alt="Winter mountain landscape"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1308.jpeg" alt="Mountain scenery"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1315.jpeg" alt="Mountain stream"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2037.jpeg" alt="Natural landscape"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3895.jpeg" alt="Scenic view"></div>
+          <div class="tile"><img data-src="assets/images/IMG_6269_sm.jpeg" alt="Stormy clouds over sunlit coastal mountains"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0619.jpeg" alt="Landscape photograph"></div>
+        </div>
+        <!-- Column 2 -->
+        <div class="grid-col">
+          <div class="tile"><img data-src="assets/images/IMG_3177.jpeg" alt="Winding river through mountain valley"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1313.jpeg" alt="Mossy stream with waterfall"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0598.jpeg" alt="Frosted forest treeline"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2018.jpeg" alt="Sunflower field under clouds"></div>
+          <div class="tile"><img data-src="assets/images/IMG_6439.jpeg" alt="Light rays over lake"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0801.jpeg" alt="Misty lakeside scene"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1309.jpeg" alt="Valley landscape"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1411.jpeg" alt="Landscape vista"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2825.jpeg" alt="Landscape photography"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3994.jpeg" alt="Landscape shot"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0941.jpeg" alt="Mountain photograph"></div>
+          <div class="tile"><img data-src="assets/images/IMG_lake_cormorant.jpeg" alt="Autumn lake with cormorant through bare branches"></div>
+        </div>
+        <!-- Column 3 (center — has name card + theme cards) -->
+        <div class="grid-col">
+          <div class="tile"><img src="assets/images/IMG_1369.jpeg" alt="Baroque church interior" class="is-loaded"></div>
+          <div class="tile tile--card js-card js-open-modal" style="background:var(--card-bg)">
+            <h2 class="card-name"><span class="card-name__line"><span class="js-name-wave">J</span><span class="js-name-wave">a</span><span class="js-name-wave">c</span><span class="js-name-wave">k</span></span><span class="card-name__line"><span class="js-name-wave">C</span><span class="js-name-wave">r</span><span class="js-name-wave">u</span><span class="js-name-wave">m</span><span class="js-name-wave">p</span></span></h2>
+            <div class="card-divider"></div>
+            <div class="card-text-wrap"><p class="card-text">Mobile photographer exploring light, landscape, and the world in between.</p></div>
+            <div class="card-link-wrap"><span class="card-link">Profile ↗</span></div>
+          </div>
+          <div class="tile"><img data-src="assets/images/IMG_0008.jpeg" alt="Rural sunset with dramatic clouds"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1306.jpeg" alt="Church with trees and blue sky"></div>
+          <div class="tile tile--card js-card" style="background:#C2A8A3">
+            <h2>Landscapes<br>&amp; Light</h2>
+            <div class="card-divider"></div>
+            <p class="card-text">Shot entirely on mobile. Chasing golden hours, still waters, and wide open skies.</p>
+          </div>
+          <div class="tile"><img data-src="assets/images/IMG_0834.jpeg" alt="Mountain reflections"></div>
+          <div class="tile tile--card js-card" style="background:#8A9E8F">
+            <h2>Architecture<br>&amp; Travel</h2>
+            <div class="card-divider"></div>
+            <p class="card-text">From Istanbul's grand mosques to baroque interiors — geometry and wonder in built spaces.</p>
+          </div>
+          <div class="tile"><img data-src="assets/images/IMG_1479.jpeg" alt="Nature scene"></div>
+          <div class="tile tile--card js-card" style="background:#B5A48E">
+            <h2>Seasons<br>&amp; Weather</h2>
+            <div class="card-divider"></div>
+            <p class="card-text">From frozen alpine winters to golden autumn forests — nature's rhythm, frame by frame.</p>
+          </div>
+          <div class="tile"><img src="assets/images/IMG_3356.jpeg" alt="Urban landscape" class="is-loaded"></div>
+          <div class="tile"><img src="assets/images/IMG_1308%20(1).jpeg" alt="Mountain vista" class="is-loaded"></div>
+        </div>
+        <!-- Column 4 -->
+        <div class="grid-col">
+          <div class="tile"><img data-src="assets/images/IMG_6440.jpeg" alt="Sunbeams through mountain clouds"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0717.jpeg" alt="Snowy road with yellow bus"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0833.jpeg" alt="Solitary tree by mountain lake"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0410_sm.jpeg" alt="Red bicycle on autumn forest bridge"></div>
+          <div class="tile"><img data-src="assets/images/IMG_4054.jpeg" alt="Milky Way over rocks"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0936.jpeg" alt="Mountain lake vista"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1310.jpeg" alt="Mountain panorama"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1741.jpeg" alt="Scenic landscape"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3368.jpeg" alt="Architecture detail"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3024.jpeg" alt="Mountain landscape"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1845.jpeg" alt="Scenic photograph"></div>
+          <div class="tile"><img data-src="assets/images/IMG_cars_town.jpeg" alt="European town square with vintage cars and church spire"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1862.jpeg" alt="Landscape scene"></div>
+        </div>
+        <!-- Column 5 -->
+        <div class="grid-col">
+          <div class="tile"><img data-src="assets/images/IMG_3352.jpeg" alt="Istanbul street with Galata Tower"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0660.jpeg" alt="Snow-covered forest corridor"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2866.jpeg" alt="Road vanishing toward mountains"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3398%20(1).jpeg" alt="Blue Mosque at sunset"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0585.jpeg" alt="Mountain sunset panorama"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0933.jpeg" alt="Mirror lake reflecting misty mountains"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1311.jpeg" alt="Alpine view"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2003.jpeg" alt="Travel photography"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3857.jpeg" alt="Nature photography"></div>
+          <div class="tile"><img data-src="assets/images/WhatsApp%20Image%202026-01-09%20at%2016.16.39.jpeg" alt="Scenic photograph"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1924.jpeg" alt="Travel photograph"></div>
+          <div class="tile"><img data-src="assets/images/IMG_1307.jpeg" alt="Alpine landscape"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-bar">
+      <ul>
+        <li>
+          <a href="https://instagram.com/jackcrvmp" target="_blank" rel="noreferrer" class="btn">
+            <span>Ig</span>
+            <div class="btn__outer">
+              <span class="label">@jackcrump</span>
+              <div class="btn__mask --1"><span>@jackcrump</span></div>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Copyright -->
+    <span class="copyright theme-1">©2026</span>
+
+    <!-- Modal -->
+    <div class="modal js-modal">
+      <canvas class="modal__3d js-modal-3d"></canvas>
+      <div class="modal__content">
+        <ul style="display:flex;flex-direction:column">
+          <li class="modal__skill"><div class="modal__skill-num">1</div>Landscapes</li>
+          <li class="modal__skill"><div class="modal__skill-num">2</div>Reflections</li>
+          <li class="modal__skill"><div class="modal__skill-num">3</div>Architecture</li>
+          <li class="modal__skill"><div class="modal__skill-num">4</div>Travel</li>
+        </ul>
+        <div class="modal__bio">
+          <p>I'm Jack — a mobile phone photographer capturing landscapes, reflections, architecture, and travel moments from across Europe and beyond. Every image shot on a phone, proving that the best camera is the one in your pocket.</p>
+          <p>From frozen alpine lakes to Istanbul's grand mosques, from golden sunflower fields to midnight skies — this is the world as I see it, one frame at a time.</p>
+        </div>
+      </div>
+      <button type="button" class="modal__close js-close-modal font-2">Close ↙</button>
+      <span class="modal__copy">©2026</span>
+      <a href="https://maiaa.ai" target="_blank" rel="noreferrer" class="modal__credit">maiaa.ai</a>
+    </div>
+
+  </div>
+
+  <!-- WebGL transition canvas -->
+  <canvas class="js-webgl-transition" style="position:fixed;inset:0;z-index:799;pointer-events:none;visibility:hidden;"></canvas>
+
+  <!-- Modal name (outside all containers for independent z-stacking) -->
+  <div class="modal__name js-modal-name">
+    <h2><span class="js-name-line" style="display:block"><span class="js-name-char">J</span><span class="js-name-char">a</span><span class="js-name-char">c</span><span class="js-name-char">k</span></span><span class="js-name-line" style="display:block"><span class="js-name-char">C</span><span class="js-name-char">r</span><span class="js-name-char">u</span><span class="js-name-char">m</span><span class="js-name-char">p</span></span></h2>
+  </div>
+
+  <!-- Film grain — in root stacking context so it stays above WebGL/modal transitions -->
+  <canvas class="grain js-grain"></canvas>
+
+  <!-- SVG chromatic aberration filter for scroll glitch -->
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+    <defs>
+      <filter id="glitch-rgb" color-interpolation-filters="sRGB">
+        <feOffset in="SourceGraphic" dx="0" dy="0" result="r">
+          <animate attributeName="dx" values="0" dur="0.1s" fill="freeze" id="glitch-r-dx"/>
+        </feOffset>
+        <feOffset in="SourceGraphic" dx="0" dy="0" result="b">
+          <animate attributeName="dx" values="0" dur="0.1s" fill="freeze" id="glitch-b-dx"/>
+        </feOffset>
+        <feColorMatrix in="r" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r-only"/>
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g-only"/>
+        <feColorMatrix in="b" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b-only"/>
+        <feBlend in="r-only" in2="g-only" mode="screen" result="rg"/>
+        <feBlend in="rg" in2="b-only" mode="screen"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    /* -- Viewport height fix -- */
+    function setVH() {
+      document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+    }
+    setVH();
+    window.addEventListener('resize', setVH);
+
+    /* -- Film grain (pre-generated frames for performance) -- */
+    var grainCanvas = document.querySelector('.js-grain');
+    if (grainCanvas) {
+      var ctx = grainCanvas.getContext('2d');
+      var grainW, grainH;
+      var grainFrames = [];
+      var grainFrameCount = 6;
+      var grainIdx = 0;
+      var grainTick = 0;
+
+      function buildGrainFrames() {
+        grainW = Math.round(window.innerWidth / 3);
+        grainH = Math.round(window.innerHeight / 3);
+        grainCanvas.width = grainW;
+        grainCanvas.height = grainH;
+        grainFrames = [];
+        for (var f = 0; f < grainFrameCount; f++) {
+          var imageData = ctx.createImageData(grainW, grainH);
+          var data = imageData.data;
+          for (var i = 0; i < data.length; i += 4) {
+            var v = Math.random() * 255;
+            data[i] = v; data[i+1] = v; data[i+2] = v; data[i+3] = 255;
+          }
+          grainFrames.push(imageData);
+        }
+      }
+      buildGrainFrames();
+      window.addEventListener('resize', buildGrainFrames);
+
+      function renderGrain() {
+        grainTick++;
+        if (grainTick % 3 === 0) {
+          ctx.putImageData(grainFrames[grainIdx], 0, 0);
+          grainIdx = (grainIdx + 1) % grainFrameCount;
+        }
+        requestAnimationFrame(renderGrain);
+      }
+      renderGrain();
+    }
+
+    /* -- Shared utility: split element text into individually animatable word spans -- */
+    function splitIntoWords(el) {
+      if (!el) return [];
+      var text = el.textContent;
+      var words = text.split(/\s+/).filter(function(w) { return w.length > 0; });
+      el.innerHTML = '';
+      var wordEls = [];
+      words.forEach(function(word, i) {
+        var wrap = document.createElement('span');
+        wrap.style.cssText = 'display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:0.1em;';
+        var inner = document.createElement('span');
+        inner.style.cssText = 'display:inline-block;';
+        inner.textContent = word;
+        wrap.appendChild(inner);
+        el.appendChild(wrap);
+        if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
+        wordEls.push(inner);
+      });
+      return wordEls;
+    }
+
+    /* -- Load images -- */
+    document.querySelectorAll('.tile img[data-src]').forEach(function(img) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+      function onLoad() { img.classList.add('is-loaded'); }
+      if (img.complete) onLoad();
+      else img.addEventListener('load', onLoad, { once: true });
+    });
+
+    /* -- Theme cycling (matching reference pattern) -- */
+    var themes = [
+      ['#2A2725', '#2A2725'],  /* warm white (default) */
+      ['#5C4A42', '#fff'],      /* dusty rose */
+      ['#2A3A2E', '#fff'],      /* sage green */
+      ['#4A3D2E', '#fff']       /* warm sand */
+    ];
+    var currentTheme = 0;
+    var root = document.documentElement;
+
+    function setTheme(idx) {
+      if (idx === currentTheme) return;
+      currentTheme = idx;
+      var t = themes[idx];
+      root.style.setProperty('--theme-1', t[0]);
+      root.style.setProperty('--theme-2', t[1]);
+    }
+
+    /* Observe card tiles for theme changes */
+    var cards = document.querySelectorAll('.js-card');
+    var themeMap = new Map();
+    cards.forEach(function(card, i) {
+      themeMap.set(card, (i + 1) % themes.length);
+    });
+
+    var themeObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+          var idx = themeMap.get(entry.target);
+          if (idx !== undefined) setTheme(idx);
+        }
+      });
+    }, { threshold: [0.3] });
+
+    cards.forEach(function(card) { themeObserver.observe(card); });
+
+    /* -- Per-column infinite looping scroll with masonry offsets -- */
+    var wrap = document.querySelector('.js-grid-wrap');
+    var track = document.querySelector('.js-grid-track');
+    if (!wrap || !track) return;
+
+    var columns = track.querySelectorAll('.grid-col');
+    var colData = [];
+    var speeds = [0.9, 1.05, 0.85, 1.1, 0.95];
+    /* Masonry offsets: fraction of sectionHeight to stagger each column.
+       Center col (2) pushed up so Jack Crump card is centered on load.
+       Right cols (3,4) shifted up more for visual variety. */
+    var isMobilePortrait = window.innerWidth <= 550 && window.innerHeight > window.innerWidth;
+    var masonryOffsets = isMobilePortrait
+      ? [0.03, -0.01, -0.035, -0.02, -0.03]
+      : [0.03, -0.01, 0.055, -0.06, -0.03];
+
+    columns.forEach(function(col, colIdx) {
+      var originalTiles = Array.from(col.children);
+      var tileCount = originalTiles.length;
+
+      /* Clone tiles 2x for seamless infinite loop */
+      for (var copy = 0; copy < 2; copy++) {
+        originalTiles.forEach(function(tile) {
+          var clone = tile.cloneNode(true);
+          clone.setAttribute('aria-hidden', 'true');
+          col.appendChild(clone);
+          var imgs = clone.querySelectorAll('img');
+          imgs.forEach(function(img) {
+            if (img.dataset.src) {
+              img.src = img.dataset.src;
+              img.removeAttribute('data-src');
+            }
+            function onLoad() { img.classList.add('is-loaded'); }
+            if (img.complete) onLoad();
+            else img.addEventListener('load', onLoad, { once: true });
+          });
+          if (clone.classList.contains('js-card')) {
+            themeMap.set(clone, themeMap.get(tile) || 0);
+            themeObserver.observe(clone);
+          }
+        });
+      }
+
+      colData.push({
+        el: col,
+        originalCount: tileCount,
+        sectionHeight: 0,
+        speed: speeds[colIdx] || 1,
+        masonry: masonryOffsets[colIdx] || 0
+      });
+    });
+
+    function measureColumns() {
+      colData.forEach(function(cd) {
+        var children = cd.el.children;
+        var gap = parseFloat(getComputedStyle(cd.el).gap) || 16;
+        var h = 0;
+        for (var i = 0; i < cd.originalCount; i++) {
+          h += children[i].offsetHeight + gap;
+        }
+        cd.sectionHeight = h;
+      });
+    }
+
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(measureColumns, 200);
+    });
+    window.addEventListener('load', function() { setTimeout(measureColumns, 500); });
+    setTimeout(measureColumns, 100);
+
+    var scrollPos = 0;
+    var targetScroll = 0;
+    var smoothing = 0.08;
+    var introComplete = false;
+
+    /* Wheel — block during intro so floating name stays locked to card */
+    wrap.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      if (!introComplete) return;
+      targetScroll += e.deltaY * 1.2;
+    }, { passive: false });
+
+    /* Touch */
+    var touchStartY = 0, touchDragStart = 0, touchVel = 0, touchLastY = 0;
+    wrap.addEventListener('touchstart', function(e) {
+      var t = e.touches[0];
+      touchStartY = t.clientY;
+      touchLastY = t.clientY;
+      touchDragStart = targetScroll;
+      touchVel = 0;
+    }, { passive: true });
+
+    wrap.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (!introComplete) return;
+      var t = e.touches[0];
+      var dy = touchStartY - t.clientY;
+      targetScroll = touchDragStart + dy * 1.5;
+      touchVel = (touchLastY - t.clientY) * 0.3;
+      touchLastY = t.clientY;
+    }, { passive: false });
+
+    wrap.addEventListener('touchend', function() {
+      if (!introComplete) return;
+      targetScroll += touchVel * 10;
+    });
+
+    /* Animation loop — direct style writes for perf */
+    var scrollDiff = 0;
+    var yMultipliers = [0.6, 0.8, 1.0, 0.8, 0.6];
+
+    /* Cache tile references and positions per column for perf */
+    colData.forEach(function(cd) {
+      cd.tiles = Array.from(cd.el.children);
+    });
+    function cacheTilePositions() {
+      colData.forEach(function(cd) {
+        for (var t = 0; t < cd.tiles.length; t++) {
+          cd.tiles[t]._top = cd.tiles[t].offsetTop;
+          cd.tiles[t]._h = cd.tiles[t].offsetHeight;
+        }
+      });
+    }
+    cacheTilePositions();
+    window.addEventListener('resize', function() { setTimeout(cacheTilePositions, 300); });
+
+    /* Previous scrollPos for velocity calc */
+    var prevScrollPos = 0;
+
+    /* Glitch: chromatic aberration via SVG filter */
+    var glitchRDx = document.getElementById('glitch-r-dx');
+    var glitchBDx = document.getElementById('glitch-b-dx');
+    var glitchActive = false;
+    var glitchSmoothed = 0;
+
+    gsap.ticker.add(function() {
+      scrollPos += (targetScroll - scrollPos) * smoothing;
+
+      /* Scroll velocity → flap (rotateX per tile) */
+      var velocity = scrollPos - prevScrollPos;
+      prevScrollPos = scrollPos;
+      var rawDiff = velocity * 0.06;
+      rawDiff = Math.max(-1, Math.min(1, rawDiff));
+      scrollDiff += (rawDiff - scrollDiff) * 0.14;
+
+      /* Glitch: subtle chromatic aberration proportional to velocity */
+      var absVel = Math.abs(velocity);
+      var glitchTarget = Math.min(1, absVel * 0.015);
+      glitchSmoothed += (glitchTarget - glitchSmoothed) * 0.2;
+      if (glitchSmoothed > 0.01) {
+        var rgbShift = glitchSmoothed * 2.5; /* max ~2.5px shift */
+        var dir = velocity > 0 ? 1 : -1;
+        if (glitchRDx) glitchRDx.setAttribute('values', String(rgbShift * dir));
+        if (glitchBDx) glitchBDx.setAttribute('values', String(-rgbShift * dir));
+        if (!glitchActive) {
+          wrap.style.filter = 'url(#glitch-rgb)';
+          glitchActive = true;
+        }
+      } else if (glitchActive) {
+        wrap.style.filter = '';
+        glitchActive = false;
+        if (glitchRDx) glitchRDx.setAttribute('values', '0');
+        if (glitchBDx) glitchBDx.setAttribute('values', '0');
+      }
+
+      var vh = window.innerHeight;
+
+      for (var idx = 0; idx < colData.length; idx++) {
+        var cd = colData[idx];
+        if (cd.sectionHeight <= 0) continue;
+        var colScroll = scrollPos * cd.speed + cd.masonry * cd.sectionHeight;
+        var offset = ((colScroll % cd.sectionHeight) + cd.sectionHeight) % cd.sectionHeight;
+
+        var introDrift = cd.introOffset || 0;
+        var scrollY = -offset + introDrift;
+        /* Hybrid: margin-top for coarse positioning (keeps tiles in Chrome's paint region),
+           transform for smooth sub-pixel remainder (no layout thrash between steps) */
+        var coarse = Math.round(scrollY / 1000) * 1000;
+        var fine = scrollY - coarse;
+        if (coarse !== cd._lastCoarse) {
+          cd.el.style.marginTop = coarse + 'px';
+          cd._lastCoarse = coarse;
+        }
+        cd.el.style.transform = 'translate3d(0,' + fine + 'px,0)';
+
+        /* Apply flap to individual tiles — per-tile variation based on viewport position */
+        var baseFlap = scrollDiff * (yMultipliers[idx] || 1) * 7.5;
+        if (Math.abs(baseFlap) > 0.05) {
+          for (var t = 0; t < cd.tiles.length; t++) {
+            var tile = cd.tiles[t];
+            /* Use cached positions + JS scroll value — no DOM reads to avoid layout thrash */
+            var tileCenterY = scrollY + (tile._top || 0) + (tile._h || 160) * 0.5;
+            /* Tiles near viewport center flap most, edges flap less */
+            var distFromCenter = Math.abs(tileCenterY - vh * 0.5) / (vh * 0.5);
+            var proximity = 1 - Math.min(1, distFromCenter * 0.7);
+            var tileFlap = baseFlap * (0.3 + proximity * 0.7);
+            tile.style.transform = 'perspective(600px) rotateX(' + tileFlap + 'deg)';
+          }
+          cd._flapping = true;
+        } else if (cd._flapping) {
+          for (var t = 0; t < cd.tiles.length; t++) {
+            cd.tiles[t].style.transform = '';
+          }
+          cd._flapping = false;
+        }
+      }
+
+      /* Keep modalName locked to card while scrolling */
+      if (!modalOpen && introComplete) positionNameAtCard();
+    });
+
+    /* -- Modal with choreographed GSAP timeline + 3D graphic -- */
+    var modal = document.querySelector('.js-modal');
+    var canvas3d = document.querySelector('.js-modal-3d');
+    var webglCanvas = document.querySelector('.js-webgl-transition');
+    var openBtns = document.querySelectorAll('.js-open-modal');
+    var closeBtn = document.querySelector('.js-close-modal');
+    var modalOpen = false;
+    var anim3d = null;
+    var openTl = null;
+    var lastCardRect = null;
+    var lastCardEl = null;
+    var lastVW = 0;
+    var lastVH = 0;
+
+    var easeOut = 'power3.out';
+    var modalName = document.querySelector('.js-modal-name');
+    /* Position modalName over the card h2 — used after intro and on every scroll tick */
+    var cachedModalH2Rect = null;
+    function measureModalNatural() {
+      gsap.set(modalName, {
+        visibility: 'visible', opacity: 1,
+        transformOrigin: 'top left',
+        clearProps: 'scale,x,y'
+      });
+      var mh2 = modalName.querySelector('h2');
+      cachedModalH2Rect = mh2.getBoundingClientRect();
+    }
+    function positionNameAtCard() {
+      if (!modalName) return;
+      /* Find the js-open-modal card closest to viewport centre */
+      var allCards = document.querySelectorAll('.js-open-modal');
+      if (!allCards.length) return;
+      var vcx = window.innerWidth / 2;
+      var vcy = window.innerHeight / 2;
+      var best = null, bestDist = Infinity;
+      allCards.forEach(function(c) {
+        var r = c.getBoundingClientRect();
+        var cx = r.left + r.width / 2;
+        var cy = r.top + r.height / 2;
+        var d = Math.abs(cx - vcx) + Math.abs(cy - vcy);
+        if (d < bestDist) { bestDist = d; best = c; }
+      });
+      if (!best) return;
+      var cardH2 = best.querySelector('h2');
+      var cardH2Rect = cardH2.getBoundingClientRect();
+      if (!cachedModalH2Rect) measureModalNatural();
+      var s = cardH2Rect.height / cachedModalH2Rect.height;
+      var dx = cardH2Rect.left - cachedModalH2Rect.left;
+      var dy = cardH2Rect.top - cachedModalH2Rect.top;
+      gsap.set(modalName, {
+        visibility: 'visible', opacity: 1,
+        transformOrigin: 'top left',
+        scale: s, x: dx, y: dy
+      });
+      /* Hide h2 on ALL name cards so no duplicates show */
+      allCards.forEach(function(c) {
+        var h = c.querySelector('h2');
+        if (h) h.style.visibility = 'hidden';
+      });
+    }
+    window.addEventListener('resize', function() { cachedModalH2Rect = null; });
+
+    /* --- Three.js WebGL transition setup --- */
+    var renderer = new THREE.WebGLRenderer({ canvas: webglCanvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.OrthographicCamera(
+      -window.innerWidth / 2, window.innerWidth / 2,
+      window.innerHeight / 2, -window.innerHeight / 2, -1, 1
+    );
+
+    var vertShader = [
+      'uniform float u_progress;',
+      'uniform vec4 u_cardRect;',
+      'uniform vec2 u_screen;',
+      'uniform vec2 u_anchor;',
+      'varying vec2 vUv;',
+      '',
+      'void main() {',
+      '  vec2 uv = position.xy + 0.5;',
+      '  vUv = uv;',
+      '',
+      '  vec2 cardCenter = vec2(',
+      '    u_cardRect.x + u_cardRect.z * 0.5 - u_screen.x * 0.5,',
+      '    -(u_cardRect.y + u_cardRect.w * 0.5 - u_screen.y * 0.5)',
+      '  );',
+      '',
+      '  /* Wave sweep: u_anchor controls direction. */',
+      '  /* Normalize anchor to get sweep direction, then dot with uv */',
+      '  float anchorLen = length(u_anchor);',
+      '  /* When anchor is zero (intro), use uniform expansion */',
+      '  float sweepDot = 0.0;',
+      '  if (anchorLen > 0.01) {',
+      '    vec2 dir = normalize(u_anchor);',
+      '    /* Map uv to -1..1 range centered on mesh */',
+      '    vec2 uvCentered = (uv - 0.5) * 2.0;',
+      '    sweepDot = dot(uvCentered, dir);',
+      '  }',
+      '',
+      '  /* Vertices aligned with anchor direction start first (low delay) */',
+      '  /* sweepDot ranges from -1 (opposite corner) to +1 (anchor corner) */',
+      '  float delay = (1.0 - sweepDot) * 0.5;',
+      '  float spread = 0.3;',
+      '  float rawP = clamp((u_progress - delay * spread) / (1.0 - spread), 0.0, 1.0);',
+      '  /* Blend with base progress so all vertices move from frame 1 */',
+      '  float p = mix(u_progress, rawP, 0.7);',
+      '  p = p * p * (3.0 - 2.0 * p);',
+      '',
+      '  float w = mix(u_cardRect.z, u_screen.x, p);',
+      '  float h = mix(u_cardRect.w, u_screen.y, p);',
+      '  vec2 center = mix(cardCenter, vec2(0.0), p);',
+      '  vec2 pos = position.xy * vec2(w, h) + center;',
+      '',
+      '  /* Soft wave curl at the expanding wavefront */',
+      '  float waveDist = p - u_progress;',
+      '  float envelope = u_progress * (1.0 - u_progress) * 4.0;',
+      '  float curlAmt = exp(-waveDist * waveDist * 6.0) * envelope * 3.0;',
+      '  pos.y += curlAmt * (uv.y - 0.5);',
+      '',
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 0.0, 1.0);',
+      '}'
+    ].join('\n');
+
+    var fragShader = [
+      'uniform sampler2D u_texture;',
+      'uniform float u_opacity;',
+      'varying vec2 vUv;',
+      '',
+      'void main() {',
+      '  vec4 tex = texture2D(u_texture, vUv);',
+      '  gl_FragColor = vec4(tex.rgb, tex.a * u_opacity);',
+      '}'
+    ].join('\n');
+
+    /* Offscreen canvas for rendering text onto the fold surface */
+    var offCanvas = document.createElement('canvas');
+    var offCtx = offCanvas.getContext('2d');
+    var foldTexture = new THREE.CanvasTexture(offCanvas);
+    foldTexture.minFilter = THREE.LinearFilter;
+    foldTexture.magFilter = THREE.LinearFilter;
+
+    /* Render the card bg + name text onto the offscreen canvas.
+       opts.textX / opts.textY override the default 5rem position (in CSS px).
+       opts.letterSpacing: extra px between chars (default 0). */
+    function renderFoldTexture(bgColor, textColor, textLines, fontSize, lineHeight, opts) {
+      var dpr = Math.min(window.devicePixelRatio, 2);
+      var w = Math.round(window.innerWidth * dpr);
+      var h = Math.round(window.innerHeight * dpr);
+      offCanvas.width = w;
+      offCanvas.height = h;
+      /* Background */
+      offCtx.fillStyle = bgColor;
+      offCtx.fillRect(0, 0, w, h);
+      /* Text */
+      var fPx = fontSize * dpr;
+      offCtx.font = '300 italic ' + fPx + 'px "Cormorant Garamond", serif';
+      offCtx.fillStyle = textColor;
+      offCtx.textBaseline = 'top';
+      var rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      var tx = ((opts && opts.textX != null) ? opts.textX : 5 * rem) * dpr;
+      var ty = ((opts && opts.textY != null) ? opts.textY : 5 * rem) * dpr;
+      var lh = fPx * lineHeight;
+      var ls = ((opts && opts.letterSpacing) || 0) * dpr;
+      for (var i = 0; i < textLines.length; i++) {
+        if (ls !== 0) {
+          /* Draw char by char with spacing */
+          var cx = tx;
+          for (var c = 0; c < textLines[i].length; c++) {
+            offCtx.fillText(textLines[i][c], cx, ty + i * lh);
+            cx += offCtx.measureText(textLines[i][c]).width + ls;
+          }
+        } else {
+          offCtx.fillText(textLines[i], tx, ty + i * lh);
+        }
+      }
+      /* Dispose old texture and create a fresh one */
+      if (foldTexture) foldTexture.dispose();
+      foldTexture = new THREE.CanvasTexture(offCanvas);
+      foldTexture.minFilter = THREE.LinearFilter;
+      foldTexture.magFilter = THREE.LinearFilter;
+      planeMat.uniforms.u_texture.value = foldTexture;
+    }
+
+    /* High subdivision count for smooth wave deformation */
+    var planeGeo = new THREE.PlaneGeometry(1, 1, 300, 300);
+    var planeMat = new THREE.ShaderMaterial({
+      uniforms: {
+        u_progress: { value: 0 },
+        u_cardRect: { value: new THREE.Vector4(0, 0, 1, 1) },
+        u_screen: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        u_anchor: { value: new THREE.Vector2(0, 0) },
+        u_texture: { value: foldTexture },
+        u_opacity: { value: 1.0 }
+      },
+      vertexShader: vertShader,
+      fragmentShader: fragShader,
+      transparent: true,
+      depthTest: false
+    });
+    var planeMesh = new THREE.Mesh(planeGeo, planeMat);
+    scene.add(planeMesh);
+
+    window.addEventListener('resize', function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.left = -window.innerWidth / 2;
+      camera.right = window.innerWidth / 2;
+      camera.top = window.innerHeight / 2;
+      camera.bottom = -window.innerHeight / 2;
+      camera.updateProjectionMatrix();
+      planeMat.uniforms.u_screen.value.set(window.innerWidth, window.innerHeight);
+    });
+
+    function renderWebGL() {
+      renderer.render(scene, camera);
+    }
+
+    /* Transition proxy for GSAP */
+    var transitionProxy = { progress: 0 };
+
+    /* -- Intro: blank → text slides in + fold begins simultaneously → card -- */
+    (function() {
+      var nameCard = document.querySelector('.js-open-modal');
+      var introCover = document.querySelector('.js-intro-cover');
+      if (!nameCard || !introCover) { positionNameAtCard(); introComplete = true; return; }
+
+      /* Use modalName directly — no overlay clone, no handoff, no jolt */
+      /* Hide card h2 since modalName replaces it */
+      var cardH2 = nameCard.querySelector('h2');
+      if (cardH2) cardH2.style.visibility = 'hidden';
+
+      /* Split card caption + link into words for masked reveal */
+      var cardTextEl = nameCard.querySelector('.card-text');
+      var cardLinkEl = nameCard.querySelector('.card-link');
+      var captionWords = splitIntoWords(cardTextEl);
+      var linkWords = splitIntoWords(cardLinkEl);
+
+      /* Get modalName chars */
+      var introChars = modalName.querySelectorAll('.js-name-char');
+
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          measureColumns();
+
+          /* Measure and position modalName at the card */
+          cachedModalH2Rect = null;
+          measureModalNatural();
+          positionNameAtCard();
+
+          /* Name chars: start above, invisible — will drop down right-to-left */
+          gsap.set(introChars, { yPercent: -120, opacity: 0 });
+          /* Caption/link words: start fully below their overflow:hidden wrappers */
+          gsap.set(captionWords, { yPercent: 105 });
+          gsap.set(linkWords, { yPercent: 105 });
+
+          /* Prep WebGL */
+          var vw = window.innerWidth;
+          var vh = window.innerHeight;
+          planeMat.uniforms.u_screen.value.set(vw, vh);
+          /* Wave anchor points toward card — use visible card (may be clone) */
+          var allOpenCards = document.querySelectorAll('.js-open-modal');
+          var visibleCard = nameCard;
+          var bestCardDist = Infinity;
+          allOpenCards.forEach(function(c) {
+            var r = c.getBoundingClientRect();
+            var d = Math.abs(r.top + r.height / 2 - vh / 2);
+            if (d < bestCardDist) { bestCardDist = d; visibleCard = c; }
+          });
+          var cardR = visibleCard.getBoundingClientRect();
+          var cardCX = cardR.left + cardR.width * 0.5;
+          var cardCY = cardR.top + cardR.height * 0.5;
+          var anchorX = (cardCX - vw * 0.5) * 0.5;
+          var anchorY = -(cardCY - vh * 0.5) * 0.5;
+          planeMat.uniforms.u_anchor.value.set(anchorX, anchorY);
+          planeMat.uniforms.u_progress.value = 1;
+          planeMat.uniforms.u_opacity.value = 1;
+          transitionProxy.progress = 1;
+
+          function updateCardRect() {
+            var r = visibleCard.getBoundingClientRect();
+            planeMat.uniforms.u_cardRect.value.set(r.left, r.top, r.width, r.height);
+            /* Reposition modalName at card every frame during intro */
+            positionNameAtCard();
+          }
+          updateCardRect();
+
+          /* Render plain card-bg texture */
+          var cardBg = getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim() || '#D4CEC7';
+          renderFoldTexture(cardBg, cardBg, [], 0, 0);
+          renderWebGL();
+
+          /* Blank hold, then fold starts 300ms before text */
+          var introTl = gsap.timeline({ delay: 0.45 });
+
+          /* 1. Swap CSS cover for WebGL and start folding first */
+          introTl.add(function() {
+            webglCanvas.style.visibility = 'visible';
+            introCover.style.display = 'none';
+          }, 0);
+
+          /* Fold: starts at t=0, text starts at t=0.3 */
+          introTl.to(transitionProxy, {
+            progress: 0,
+            duration: 2.86,
+            ease: 'power2.inOut',
+            onUpdate: function() {
+              updateCardRect();
+              planeMat.uniforms.u_progress.value = transitionProxy.progress;
+              renderWebGL();
+            }
+          }, 0);
+
+          /* 2. Name chars — fall from above, staggered right-to-left */
+          introTl.to(introChars, {
+            yPercent: 0,
+            duration: 2.0,
+            stagger: { each: 0.07, from: 'end' },
+            ease: 'expo.out'
+          }, 0.3);
+          introTl.to(introChars, {
+            opacity: 1,
+            duration: 1.4,
+            stagger: { each: 0.07, from: 'end' },
+            ease: 'power2.out'
+          }, 0.3);
+
+          /* 3. Caption — word-by-word masked reveal */
+          introTl.to(captionWords, {
+            yPercent: 0,
+            duration: 0.8,
+            stagger: 0.03,
+            ease: 'expo.out'
+          }, 1.1);
+
+          /* 4. Profile link — word-by-word masked reveal */
+          introTl.to(linkWords, {
+            yPercent: 0,
+            duration: 0.7,
+            stagger: 0.03,
+            ease: 'expo.out'
+          }, 1.6);
+
+          /* 5. Column drift — synced with fold */
+          var introDrifts = [80, -50, 0, 60, -45];
+          colData.forEach(function(cd, i) {
+            cd.introOffset = introDrifts[i] || 0;
+          });
+          var driftProxy = { t: 0 };
+          introTl.to(driftProxy, {
+            t: 1,
+            duration: 2.4,
+            ease: 'power2.out',
+            onUpdate: function() {
+              colData.forEach(function(cd, i) {
+                cd.introOffset = (introDrifts[i] || 0) * (1 - driftProxy.t);
+              });
+            },
+            onComplete: function() {
+              colData.forEach(function(cd) { cd.introOffset = 0; });
+            }
+          }, 0);
+
+          /* 6. Reveal other card text with masked word-by-word slide-up */
+          var otherCards = document.querySelectorAll('.js-card:not(.js-open-modal)');
+          var otherCardWords = [];
+          otherCards.forEach(function(card) {
+            var h2 = card.querySelector('h2');
+            var text = card.querySelector('.card-text');
+            var h2Words = splitIntoWords(h2);
+            var textWords = splitIntoWords(text);
+            gsap.set(h2Words, { yPercent: 105 });
+            gsap.set(textWords, { yPercent: 105 });
+            otherCardWords.push({ h2Words: h2Words, textWords: textWords });
+          });
+          introTl.add(function() {
+            otherCardWords.forEach(function(cw, i) {
+              var delay = i * 0.15;
+              if (cw.h2Words.length) {
+                gsap.to(cw.h2Words, {
+                  yPercent: 0, duration: 0.9, stagger: 0.03,
+                  delay: delay, ease: 'expo.out'
+                });
+              }
+              if (cw.textWords.length) {
+                gsap.to(cw.textWords, {
+                  yPercent: 0, duration: 0.8, stagger: 0.03,
+                  delay: delay + 0.1, ease: 'expo.out'
+                });
+              }
+            });
+          }, 2.2);
+
+          /* 7. Fade out WebGL — modalName is already at the card, no handoff needed */
+          introTl.to(planeMat.uniforms.u_opacity, {
+            value: 0,
+            duration: 0.5,
+            ease: 'power1',
+            onUpdate: renderWebGL,
+            onComplete: function() {
+              webglCanvas.style.visibility = 'hidden';
+              introComplete = true;
+            }
+          }, 2.6);
+        }, 150);
+      });
+    })();
+
+    /* --- 3D wireframe icosahedron on canvas (modal interior) --- */
+    function init3D(cvs) {
+      var ctx = cvs.getContext('2d');
+      var dpr = window.devicePixelRatio || 1;
+      var w, h;
+      function resize() {
+        var rect = cvs.getBoundingClientRect();
+        w = rect.width; h = rect.height;
+        cvs.width = w * dpr; cvs.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      var t = (1 + Math.sqrt(5)) / 2;
+      var verts = [
+        [-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],
+        [0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],
+        [t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]
+      ];
+      var len = Math.sqrt(1 + t * t);
+      verts = verts.map(function(v) { return [v[0]/len, v[1]/len, v[2]/len]; });
+      var edges = [
+        [0,1],[0,5],[0,7],[0,10],[0,11],
+        [1,5],[1,7],[1,8],[1,9],
+        [2,3],[2,4],[2,6],[2,10],[2,11],
+        [3,4],[3,6],[3,8],[3,9],
+        [4,5],[4,9],[4,11],[5,9],[5,11],
+        [6,7],[6,8],[6,10],[7,8],[7,10],
+        [8,9],[10,11]
+      ];
+      var rotX = 0, rotY = 0, rotZ = 0, frameId;
+      function project(v) {
+        var x1 = v[0]*Math.cos(rotY)-v[2]*Math.sin(rotY);
+        var z1 = v[0]*Math.sin(rotY)+v[2]*Math.cos(rotY);
+        var y1 = v[1];
+        var y2 = y1*Math.cos(rotX)-z1*Math.sin(rotX);
+        var z2 = y1*Math.sin(rotX)+z1*Math.cos(rotX);
+        var x3 = x1*Math.cos(rotZ)-y2*Math.sin(rotZ);
+        var y3 = x1*Math.sin(rotZ)+y2*Math.cos(rotZ);
+        var s = Math.min(w,h)*0.28;
+        return [w*0.5+x3*s, h*0.5+y3*s, z2];
+      }
+      function draw() {
+        ctx.clearRect(0,0,w,h);
+        rotY+=0.003; rotX+=0.0015; rotZ+=0.0008;
+        var color = getComputedStyle(document.documentElement).getPropertyValue('--theme-1').trim()||'#2A2725';
+        ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.globalAlpha=0.35;
+        edges.forEach(function(e){var a=project(verts[e[0]]),b=project(verts[e[1]]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});
+        ctx.globalAlpha=0.5; ctx.fillStyle=color;
+        verts.forEach(function(v){var p=project(v),r=2.5+(p[2]+1)*1.5;ctx.beginPath();ctx.arc(p[0],p[1],r,0,Math.PI*2);ctx.fill();});
+        ctx.globalAlpha=1; frameId=requestAnimationFrame(draw);
+      }
+      draw();
+      return { stop: function(){ cancelAnimationFrame(frameId); } };
+    }
+
+    /* --- Open modal — HTML text overlay with pure transform, same easing as fold --- */
+    function openModal(cardEl) {
+      if (modalOpen || !introComplete) return;
+      modalOpen = true;
+      lastCardEl = cardEl;
+      if (openTl) openTl.kill();
+
+      var rect = cardEl.getBoundingClientRect();
+      lastCardRect = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+
+      /* Plain card-bg fold texture (no text) */
+      var cardBg = getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim() || '#D4CEC7';
+      renderFoldTexture(cardBg, cardBg, [], 0, 0);
+
+      /* Set WebGL uniforms to card position */
+      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
+      planeMat.uniforms.u_screen.value.set(vw, vh);
+      planeMat.uniforms.u_progress.value = 0;
+      planeMat.uniforms.u_opacity.value = 1;
+      transitionProxy.progress = 0;
+
+      webglCanvas.style.visibility = 'visible';
+      renderWebGL();
+
+      var modalH2 = modalName.querySelector('h2');
+
+      /* Create floating overlay for caption + link so it sits above the WebGL fold */
+      var cardTextEl = cardEl.querySelector('.card-text');
+      var cardLinkEl = cardEl.querySelector('.card-link');
+      var captionOverlay = null;
+      var captionWordEls = [];
+      var linkWordEls = [];
+
+      if (cardTextEl || cardLinkEl) {
+        captionOverlay = document.createElement('div');
+        captionOverlay.style.cssText = 'position:fixed;z-index:850;pointer-events:none;';
+        if (cardTextEl) {
+          var textRect = cardTextEl.getBoundingClientRect();
+          var captionDiv = document.createElement('div');
+          var cs = getComputedStyle(cardTextEl);
+          captionDiv.style.cssText = 'font-family:' + cs.fontFamily + ';font-weight:' + cs.fontWeight +
+            ';font-size:' + cs.fontSize + ';line-height:' + cs.lineHeight +
+            ';letter-spacing:' + cs.letterSpacing + ';text-transform:' + cs.textTransform +
+            ';color:' + cs.color + ';position:absolute;left:' + textRect.left + 'px;top:' + textRect.top +
+            'px;width:' + textRect.width + 'px;';
+          captionDiv.textContent = cardTextEl.textContent;
+          captionWordEls = splitIntoWords(captionDiv);
+          captionOverlay.appendChild(captionDiv);
+          cardTextEl.style.opacity = '0';
+        }
+
+        if (cardLinkEl) {
+          var linkRect = cardLinkEl.getBoundingClientRect();
+          var ls = getComputedStyle(cardLinkEl);
+          var linkDiv = document.createElement('div');
+          linkDiv.style.cssText = 'font-family:' + ls.fontFamily + ';font-weight:' + ls.fontWeight +
+            ';font-size:' + ls.fontSize + ';line-height:' + ls.lineHeight +
+            ';letter-spacing:' + ls.letterSpacing + ';text-transform:' + ls.textTransform +
+            ';color:' + ls.color + ';position:absolute;left:' + linkRect.left + 'px;top:' + linkRect.top +
+            'px;width:' + linkRect.width + 'px;';
+          linkDiv.textContent = cardLinkEl.textContent;
+          linkWordEls = splitIntoWords(linkDiv);
+          captionOverlay.appendChild(linkDiv);
+          cardLinkEl.style.opacity = '0';
+        }
+
+        document.body.appendChild(captionOverlay);
+      }
+
+      lastVW = vw;
+      lastVH = vh;
+
+      /* Reset modal elements */
+      gsap.set(modal, { visibility: 'hidden', opacity: 0 });
+      gsap.set(canvas3d, { scale: 0, rotation: -180, y: '30%', opacity: 0, transformOrigin: 'center center' });
+      gsap.set('.modal__content', { y: 100, opacity: 0 });
+      gsap.set('.modal__close', { opacity: 0 });
+      gsap.set('.modal__copy', { opacity: 0 });
+      gsap.set('.modal__credit', { opacity: 0 });
+      var skills = document.querySelectorAll('.modal__skill');
+      var bioPs = document.querySelectorAll('.modal__bio p');
+      gsap.set(skills, { yPercent: 105, opacity: 0 });
+      gsap.set(bioPs, { yPercent: 105, opacity: 0 });
+
+      var foldDur = 1.8;
+      openTl = gsap.timeline();
+
+      /* Bias fold expansion toward text destination (top-left in screen = -x, +y in Three.js) */
+      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
+
+      /* 1. WebGL unfold card → fullscreen — text tracks fold progress */
+      var modalLines = modalH2.querySelectorAll('.js-name-line');
+      var line1Chars = modalLines[0] ? Array.from(modalLines[0].querySelectorAll('.js-name-char')) : [];
+      var line2Chars = modalLines[1] ? Array.from(modalLines[1].querySelectorAll('.js-name-char')) : [];
+      var charSpread = vw < 550 ? 15 : 60;
+
+      var captionHeadStart = 0.3; /* caption begins 300ms before the fold */
+      var textLag = 0.10; /* text lags behind fold by this fraction of progress */
+      openTl.to(transitionProxy, {
+        progress: 1,
+        duration: foldDur,
+        ease: 'power2.out',
+        onUpdate: function() {
+          var p = transitionProxy.progress;
+          /* Update fold origin to live card position (tracks scroll) */
+          var liveRect = cardEl.getBoundingClientRect();
+          planeMat.uniforms.u_cardRect.value.set(liveRect.left, liveRect.top, liveRect.width, liveRect.height);
+          planeMat.uniforms.u_progress.value = p;
+          renderWebGL();
+
+          /* Live text origin — recalculate from card's current position */
+          var liveCardH2 = cardEl.querySelector('h2');
+          var liveCardH2Rect = liveCardH2 ? liveCardH2.getBoundingClientRect() : liveRect;
+          var liveStartScale = liveCardH2Rect.height / cachedModalH2Rect.height;
+          var liveStartX = liveCardH2Rect.left - cachedModalH2Rect.left;
+          var liveStartY = liveCardH2Rect.top - cachedModalH2Rect.top;
+
+          /* Text lags behind fold so it never leaves the surface */
+          var t = Math.max(0, (p - textLag) / (1 - textLag));
+          var s = liveStartScale + (1 - liveStartScale) * t;
+          gsap.set(modalName, { scale: s, x: liveStartX * (1 - t), y: liveStartY * (1 - t) });
+
+          var spread = Math.sin(t * Math.PI) * charSpread;
+          line1Chars.forEach(function(ch, i) {
+            gsap.set(ch, { x: -(line1Chars.length - 1 - i) * spread });
+          });
+          line2Chars.forEach(function(ch, i) {
+            gsap.set(ch, { x: i * spread });
+          });
+        },
+        onComplete: function() {
+          gsap.set(modalName, { clearProps: 'scale,x,y' });
+          line1Chars.forEach(function(ch) { gsap.set(ch, { x: 0 }); });
+          line2Chars.forEach(function(ch) { gsap.set(ch, { x: 0 }); });
+        }
+      }, captionHeadStart);
+
+      /* 2. Caption words — masked slide down, starts 300ms before fold */
+      if (captionWordEls.length) {
+        openTl.to(captionWordEls, {
+          yPercent: 105,
+          duration: 0.6,
+          stagger: 0.02,
+          ease: 'expo.in'
+        }, 0);
+      }
+
+      /* 3. Profile link words — masked slide down */
+      if (linkWordEls.length) {
+        openTl.to(linkWordEls, {
+          yPercent: 105,
+          duration: 0.5,
+          stagger: 0.02,
+          ease: 'expo.in'
+        }, 0.05);
+      }
+
+      /* Remove caption overlay after words finish sliding */
+      openTl.add(function() {
+        if (captionOverlay) { captionOverlay.remove(); captionOverlay = null; }
+      }, 0.8);
+
+      /* 4. Hide card once fold covers it */
+      openTl.add(function() {
+        cardEl.style.opacity = '0';
+      }, captionHeadStart + foldDur * 0.25);
+
+      /* 5. Show modal behind WebGL at ~65% */
+      openTl.add(function() {
+        gsap.set(modal, { visibility: 'visible', opacity: 1 });
+        modal.classList.add('is-open');
+        if (canvas3d && !anim3d) anim3d = init3D(canvas3d);
+      }, captionHeadStart + foldDur * 0.65);
+
+      /* 6. Fade out WebGL at end */
+      openTl.to(planeMat.uniforms.u_opacity, {
+        value: 0, duration: 0.4, ease: 'power1.out',
+        onUpdate: renderWebGL,
+        onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
+      }, captionHeadStart + foldDur * 0.85);
+
+      /* Content slides up */
+      openTl.to('.modal__content', {
+        y: 0, opacity: 1,
+        duration: 1.0, ease: easeOut
+      }, captionHeadStart + foldDur * 0.6);
+
+      openTl.to(skills, {
+        yPercent: 0, opacity: 1,
+        duration: 0.8, stagger: 0.05, ease: 'power2.inOut'
+      }, captionHeadStart + foldDur * 0.6);
+
+      openTl.to(bioPs, {
+        yPercent: 0, opacity: 1,
+        duration: 0.7, stagger: 0.05, ease: 'power2.inOut'
+      }, captionHeadStart + foldDur * 0.75);
+
+      /* 3D icosahedron */
+      gsap.set(canvas3d, { scale: 0, rotation: -180, y: '30%', opacity: 0, transformOrigin: 'center center' });
+      openTl.to(canvas3d, {
+        scale: 1, rotation: 0, y: '0%', opacity: 1,
+        duration: 2.0, ease: 'expo.out'
+      }, captionHeadStart + foldDur * 0.45);
+
+      /* Close + copy buttons */
+      openTl.to('.modal__close', { opacity: 1, duration: 0.8, ease: 'power1' }, captionHeadStart + foldDur * 0.88);
+      openTl.to('.modal__copy', { opacity: 1, duration: 0.6, ease: 'power1' }, captionHeadStart + foldDur * 0.92);
+      openTl.to('.modal__credit', { opacity: 1, duration: 0.6, ease: 'power1' }, captionHeadStart + foldDur * 0.92);
+    }
+
+    /* --- Close modal — reverse transform, fold collapses --- */
+    function closeModal() {
+      if (!modalOpen) return;
+      if (openTl) openTl.kill();
+
+      var vw = lastVW || window.innerWidth;
+      var vh = lastVH || window.innerHeight;
+      var rect = lastCardRect || { top: vh*0.3, left: vw*0.35, width: vw*0.2, height: vh*0.3 };
+
+      var skills = document.querySelectorAll('.modal__skill');
+      var bioPs = document.querySelectorAll('.modal__bio p');
+
+      /* Plain fold texture */
+      var cardBg = getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim() || '#D4CEC7';
+      renderFoldTexture(cardBg, cardBg, [], 0, 0);
+
+      /* Reset WebGL plane to fullscreen */
+      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
+      planeMat.uniforms.u_screen.value.set(vw, vh);
+      planeMat.uniforms.u_progress.value = 1;
+      planeMat.uniforms.u_opacity.value = 0;
+      transitionProxy.progress = 1;
+      renderWebGL();
+
+      /* modalName is at its natural position (scale 1, x 0, y 0) — animate it back to card */
+      var modalH2 = modalName.querySelector('h2');
+
+      /* Cache modal natural rect once (doesn't move during close) */
+      gsap.set(modalName, { clearProps: 'scale,x,y', transformOrigin: 'top left' });
+      var modalH2Rect = modalH2.getBoundingClientRect();
+
+      /* Helper: get live card rect (tracks scroll) */
+      function getLiveCardRect() {
+        if (lastCardEl) {
+          return lastCardEl.getBoundingClientRect();
+        }
+        return rect; /* fallback to initial rect */
+      }
+      function getLiveCardH2Rect() {
+        var cardH2 = lastCardEl ? lastCardEl.querySelector('h2') : null;
+        if (cardH2) return cardH2.getBoundingClientRect();
+        return getLiveCardRect();
+      }
+
+      var foldDur = 1.8;
+      var foldStart = 0.2;
+
+      /* Same anchor bias for close */
+      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
+
+      var closeTl = gsap.timeline({
+        onComplete: function() {
+          modal.classList.remove('is-open');
+          gsap.set(modal, { visibility: 'hidden', opacity: 0 });
+          webglCanvas.style.visibility = 'hidden';
+          /* Snap modalName to card position */
+          positionNameAtCard();
+          /* Clear char offsets */
+          closeLine1.forEach(function(ch) { gsap.set(ch, { x: 0 }); });
+          closeLine2.forEach(function(ch) { gsap.set(ch, { x: 0 }); });
+          if (lastCardEl) {
+            lastCardEl.style.opacity = '';
+            /* Caption/link are already visible from the slide-up animation — just ensure opacity is correct */
+            var ct = lastCardEl.querySelector('.card-text');
+            if (ct) gsap.set(ct, { opacity: 1 });
+            var cl = lastCardEl.querySelector('.card-link');
+            if (cl) gsap.set(cl, { opacity: 1 });
+          }
+          if (anim3d) { anim3d.stop(); anim3d = null; }
+          modalOpen = false;
+        }
+      });
+
+      /* Dismiss UI elements quickly */
+      closeTl.to(['.modal__close', '.modal__copy', '.modal__credit'], { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+      closeTl.to(bioPs, { yPercent: 105, opacity: 0, duration: 0.5, stagger: -0.03, ease: 'power2.inOut' }, 0);
+      closeTl.to(skills, { yPercent: 105, opacity: 0, duration: 0.5, stagger: -0.04, ease: 'power2.inOut' }, 0);
+      closeTl.to('.modal__content', { opacity: 0, duration: 0.4, ease: 'power2.in' }, 0.1);
+      closeTl.to(canvas3d, { scale: 0, rotation: 180, y: '30%', opacity: 0, duration: 0.7, ease: 'expo.in' }, 0);
+
+      /* Show WebGL fold surface */
+      closeTl.add(function() { webglCanvas.style.visibility = 'visible'; }, 0.1);
+      closeTl.to(planeMat.uniforms.u_opacity, {
+        value: 1, duration: 0.2, ease: 'power1.in',
+        onUpdate: renderWebGL
+      }, 0.1);
+
+      /* Hide modal */
+      closeTl.add(function() {
+        gsap.set(modal, { visibility: 'hidden', opacity: 0 });
+      }, 0.35);
+
+      /* Animate modalName from natural position back to card — tied to fold progress */
+      var closeLines = modalH2.querySelectorAll('.js-name-line');
+      var closeLine1 = closeLines[0] ? Array.from(closeLines[0].querySelectorAll('.js-name-char')) : [];
+      var closeLine2 = closeLines[1] ? Array.from(closeLines[1].querySelectorAll('.js-name-char')) : [];
+      var charSpread = window.innerWidth < 550 ? 15 : 60;
+
+      var closeTextLag = 0.12; /* text leads fold on close — reaches card before fold finishes */
+      closeTl.to(transitionProxy, {
+        progress: 0,
+        duration: foldDur,
+        ease: 'power3.inOut',
+        onUpdate: function() {
+          var p = transitionProxy.progress;
+
+          /* Update fold target to live card position (tracks scroll) */
+          var liveRect = getLiveCardRect();
+          planeMat.uniforms.u_cardRect.value.set(liveRect.left, liveRect.top, liveRect.width, liveRect.height);
+          planeMat.uniforms.u_progress.value = p;
+          renderWebGL();
+
+          /* Live text target — recalculate each frame */
+          var liveH2Rect = getLiveCardH2Rect();
+          var endScale = liveH2Rect.height / modalH2Rect.height;
+          var endX = liveH2Rect.left - modalH2Rect.left;
+          var endY = liveH2Rect.top - modalH2Rect.top;
+
+          /* Text leads fold: t runs ahead so text arrives at card before fold closes */
+          var raw = 1 - p;
+          var t = Math.min(1, raw / (1 - closeTextLag));
+          var s = 1 + (endScale - 1) * t;
+          gsap.set(modalName, { scale: s, x: endX * t, y: endY * t });
+
+          var spread = Math.sin(t * Math.PI) * charSpread;
+          closeLine1.forEach(function(ch, i) {
+            gsap.set(ch, { x: -(closeLine1.length - 1 - i) * spread });
+          });
+          closeLine2.forEach(function(ch, i) {
+            gsap.set(ch, { x: i * spread });
+          });
+        }
+      }, foldStart + 0.12);
+
+      /* At end: fade out WebGL, restore card with animated caption reveal */
+      var foldEnd = foldStart + 0.12 + foldDur;
+      /* Restore card early — the fold still covers it, but wave close exposes
+         edges non-uniformly so the card must be visible underneath already */
+      closeTl.add(function() {
+        if (lastCardEl) lastCardEl.style.opacity = '';
+      }, foldEnd - 0.6);
+      closeTl.to(planeMat.uniforms.u_opacity, {
+        value: 0, duration: 0.25, ease: 'power1.out',
+        onUpdate: renderWebGL
+      }, foldEnd - 0.25);
+
+      /* Animate caption + link back in with masked slide-up (same as intro).
+         Deferred: create overlay when card becomes visible so positioning is accurate. */
+      if (lastCardEl) {
+        var _closeCaptionEl = lastCardEl.querySelector('.card-text');
+        var _closeLinkEl = lastCardEl.querySelector('.card-link');
+
+        closeTl.add(function() {
+          if (!lastCardEl) return;
+          var captionEl = _closeCaptionEl;
+          var linkEl = _closeLinkEl;
+          if (!captionEl && !linkEl) return;
+
+          /* Restore card text opacity so we can measure position */
+          if (captionEl) captionEl.style.opacity = '1';
+          if (linkEl) linkEl.style.opacity = '1';
+
+          var captionWords = splitIntoWords(captionEl);
+          var linkWords = splitIntoWords(linkEl);
+
+          /* Start below */
+          gsap.set(captionWords, { yPercent: 105 });
+          gsap.set(linkWords, { yPercent: 105 });
+
+          /* Animate caption words up */
+          if (captionWords.length) {
+            gsap.to(captionWords, {
+              yPercent: 0,
+              duration: 0.8,
+              stagger: 0.03,
+              ease: 'expo.out'
+            });
+          }
+
+          /* Animate link words up with slight delay */
+          if (linkWords.length) {
+            gsap.to(linkWords, {
+              yPercent: 0,
+              duration: 0.7,
+              delay: 0.25,
+              stagger: 0.03,
+              ease: 'expo.out'
+            });
+          }
+        }, foldEnd - 0.1);
+      }
+    }
+
+    openBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openModal(btn);
+      });
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeModal);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && modalOpen) closeModal();
+    });
+
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+node_modules/
+temporary screenshots/
+.DS_Store
+*.mov
+*.png
+test-*.mjs
+www_nrly_co.html
+.claude/
+brand_assets/
+claude.md
+screenshot.mjs
+serve.mjs
+package.json
+package-lock.json

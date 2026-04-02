@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Variables, Reset & Base Typography
+   ========================================================================== */
+
+:root {
+  --size: 1920;
+
+  /* Colors — warm grey-taupe palette */
+  --color-bg: #B8AFA6;
+  --color-text: #2A2725;
+  --color-text-muted: #5C5654;
+  --color-surface: #C5BCB3;
+  --color-border: #9E9590;
+  --color-overlay: rgba(42, 39, 37, 0.85);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'Space Grotesk', sans-serif;
+
+  /* Spacing */
+  --space-sm: 1rem;
+  --space-md: 3rem;
+  --space-lg: 5rem;
+
+  /* Animation */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 0.4s;
+  --duration-normal: 0.7s;
+  --duration-slow: 0.8s;
+}
+
+@media (orientation: portrait) {
+  :root { --size: 1000; }
+}
+
+@media (orientation: portrait) and (max-width: 550px) {
+  :root { --size: 750; }
+}
+
+@media (orientation: portrait) and (max-width: 440px) {
+  :root { --size: 500; }
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: calc(100vw / var(--size) * 10);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+ol, ul {
+  list-style: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-lg);
+  padding: 0.5em 1em;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  z-index: 10000;
+  border-radius: 0 0 4px 4px;
+}
+
+.skip-link:focus {
+  top: 0;
+}
