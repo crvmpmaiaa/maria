@@ -469,9 +469,9 @@
       overflow: hidden;
       pointer-events: none;
       cursor: pointer;
-      clip-path: inset(0);
+      visibility: hidden;
     }
-    .lightbox.is-active { pointer-events: auto; }
+    .lightbox.is-active { pointer-events: auto; visibility: visible; }
     .lightbox__img {
       position: absolute;
       inset: 0;
