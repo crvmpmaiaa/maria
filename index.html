@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="format-detection" content="telephone=no">
-  <title>Jack Crump — Mobile Photography</title>
-  <meta property="og:title" content="Jack Crump — Mobile Photography">
-  <meta property="description" content="Mobile photographer exploring light, landscape, and the world in between.">
-  <meta property="og:description" content="Mobile photographer exploring light, landscape, and the world in between.">
+  <title>Maria Ignacia Ferrer — Oil Paint Artist</title>
+  <meta property="og:title" content="Maria Ignacia Ferrer — Oil Paint Artist">
+  <meta property="description" content="Spiritual oil paint artist exploring devotion, nature, and the human form through rich color and expressive brushwork.">
+  <meta property="og:description" content="Spiritual oil paint artist exploring devotion, nature, and the human form through rich color and expressive brushwork.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_gb">
-  <link rel="canonical" href="https://jackcrump.com">
+  <link rel="canonical" href="https://mariapaintings.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
@@ -18,9 +18,9 @@
   {
     "@context": "https://schema.org",
     "@type": "Person",
-    "name": "Jack Crump",
-    "jobTitle": "Mobile Photographer",
-    "description": "Mobile photographer exploring light, landscape, and the world in between."
+    "name": "Maria Ignacia Ferrer",
+    "jobTitle": "Oil Paint Artist",
+    "description": "Spiritual oil paint artist exploring devotion, nature, and the human form through rich color and expressive brushwork."
   }
   </script>
   <style>
@@ -106,8 +106,8 @@
       width: 20%;
       display: flex;
       flex-direction: column;
-      gap: 1.6rem;
-      padding: 0 0.7rem;
+      gap: 2.4rem;
+      padding: 0 1.2rem;
       content-visibility: visible;
     }
 
@@ -148,7 +148,7 @@
       transition: color 0.6s ease;
     }
     .tile--card h2.card-name {
-      font-size: 13rem;
+      font-size: 7.5rem;
       line-height: 0.85;
       display: flex;
       flex-direction: column;
@@ -229,7 +229,7 @@
       }
       .tile--card { padding:1.2rem; }
       .tile--card h2 { font-size:3.2rem; }
-      .tile--card h2.card-name { font-size:4.5rem; }
+      .tile--card h2.card-name { font-size:3.2rem; }
       .tile--card .card-text { font-size:1rem; line-height:1.3; }
       .tile--card .card-link { font-size:0.9rem; }
       .tile--card .card-link-wrap { margin-top:0.6rem; }
@@ -427,7 +427,23 @@
       transition:color 0.6s ease;
       text-decoration:none;
     }
+    .modal__portrait {
+      position:fixed;
+      right:5rem;top:50%;
+      transform:translateY(-50%);
+      width:30%;
+      max-height:75vh;
+      z-index:2;
+      overflow:hidden;
+      border-radius:4px;
+    }
+    .modal__portrait img {
+      width:100%;height:100%;
+      object-fit:cover;
+      display:block;
+    }
     @media(orientation:portrait){
+      .modal__portrait { display:none; }
       .modal__name { top:3rem;left:3rem; }
       .modal__name h2 { font-size: 18vw; }
       .modal__3d { width:100%;height:50%;top:0;bottom:auto;left:0; }
@@ -441,6 +457,74 @@
       .modal__close { top:3rem;right:3rem; }
       .modal__copy { right:3rem;bottom:7rem; }
       .modal__credit { left:3rem;bottom:7rem;font-size:1.4rem; }
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 850;
+      background: var(--card-bg);
+      pointer-events: none;
+      visibility: hidden;
+      clip-path: circle(0% at 50% 50%);
+    }
+    .lightbox.is-active { pointer-events: auto; visibility: visible; }
+    .lightbox__img {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 60vw;
+      max-height: 75vh;
+      object-fit: contain;
+      opacity: 0;
+    }
+    .lightbox__caption {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(16px, 2.4rem, 28px);
+      color: var(--theme-1);
+      letter-spacing: -0.02em;
+      text-align: center;
+      white-space: nowrap;
+      opacity: 0;
+      z-index: 860;
+      pointer-events: none;
+    }
+    .lightbox__close {
+      position: fixed;
+      top: 5rem;
+      right: 5rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: var(--theme-1);
+      z-index: 860;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .lightbox__close:hover { opacity: 0.6 !important; }
+    .lightbox__counter {
+      position: fixed;
+      bottom: 5rem;
+      right: 5rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      color: var(--theme-1);
+      opacity: 0;
+      z-index: 860;
+      pointer-events: none;
+    }
+    @media(orientation:portrait) and (max-width:440px) {
+      .lightbox__close { top: 3rem; right: 3rem; }
+      .lightbox__counter { bottom: 3rem; right: 3rem; }
+      .lightbox__caption { bottom: 3rem; font-size: 14px; }
+      .lightbox__img { max-width: 90vw; max-height: 65vh; }
     }
 
     /* Focus */
@@ -460,95 +544,76 @@
       <div class="grid-track js-grid-track">
         <!-- Column 1 -->
         <div class="grid-col">
-          <div class="tile"><img data-src="assets/images/IMG_1312.jpeg" alt="Snow-covered alpine peaks"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0535.jpeg" alt="Red bicycle against timber logs"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0673.jpeg" alt="Winter tree-lined road"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3403.jpeg" alt="Mosque interior dome"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3936.jpeg" alt="Tree framing sunset over water"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0715.jpeg" alt="Winter mountain landscape"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1308.jpeg" alt="Mountain scenery"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1315.jpeg" alt="Mountain stream"></div>
-          <div class="tile"><img data-src="assets/images/IMG_2037.jpeg" alt="Natural landscape"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3895.jpeg" alt="Scenic view"></div>
-          <div class="tile"><img data-src="assets/images/IMG_6269_sm.jpeg" alt="Stormy clouds over sunlit coastal mountains"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0619.jpeg" alt="Landscape photograph"></div>
+          <div class="tile"><img data-src="assets/images/IMG_8387.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_9901.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2127.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.2);transform-origin:center 45%"></div>
+          <div class="tile"><img data-src="assets/images/D2027AA7-14CA-4EDC-ADBC-29E08B772BBF.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_0218.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.25);transform-origin:center 35%"></div>
+          <div class="tile"><img data-src="assets/images/38631295-C442-4035-BC62-872D0F8A87D1.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.35);transform-origin:center center"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2601.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.15);transform-origin:center 40%"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3539.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
         </div>
         <!-- Column 2 -->
         <div class="grid-col">
-          <div class="tile"><img data-src="assets/images/IMG_3177.jpeg" alt="Winding river through mountain valley"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1313.jpeg" alt="Mossy stream with waterfall"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0598.jpeg" alt="Frosted forest treeline"></div>
-          <div class="tile"><img data-src="assets/images/IMG_2018.jpeg" alt="Sunflower field under clouds"></div>
-          <div class="tile"><img data-src="assets/images/IMG_6439.jpeg" alt="Light rays over lake"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0801.jpeg" alt="Misty lakeside scene"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1309.jpeg" alt="Valley landscape"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1411.jpeg" alt="Landscape vista"></div>
-          <div class="tile"><img data-src="assets/images/IMG_2825.jpeg" alt="Landscape photography"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3994.jpeg" alt="Landscape shot"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0941.jpeg" alt="Mountain photograph"></div>
-          <div class="tile"><img data-src="assets/images/IMG_lake_cormorant.jpeg" alt="Autumn lake with cormorant through bare branches"></div>
+          <div class="tile"><img data-src="assets/images/IMG_4734.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.15);transform-origin:center center"></div>
+          <div class="tile"><img data-src="assets/images/IMG_6202.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_5547.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/E63F8399-7102-46DF-BA1C-27EA209F10FA.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_7197.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.2);transform-origin:center 40%"></div>
+          <div class="tile"><img data-src="assets/images/IMG_6434.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_5573.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2133.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
         </div>
         <!-- Column 3 (center — has name card + theme cards) -->
         <div class="grid-col">
-          <div class="tile"><img src="assets/images/IMG_1369.jpeg" alt="Baroque church interior" class="is-loaded"></div>
+          <div class="tile"><img src="assets/images/IMG_2785.webp" alt="Oil painting by Maria Ignacia Ferrer" class="is-loaded"></div>
           <div class="tile tile--card js-card js-open-modal" style="background:var(--card-bg)">
-            <h2 class="card-name"><span class="card-name__line"><span class="js-name-wave">J</span><span class="js-name-wave">a</span><span class="js-name-wave">c</span><span class="js-name-wave">k</span></span><span class="card-name__line"><span class="js-name-wave">C</span><span class="js-name-wave">r</span><span class="js-name-wave">u</span><span class="js-name-wave">m</span><span class="js-name-wave">p</span></span></h2>
+            <h2 class="card-name"><span class="card-name__line"><span class="js-name-wave">M</span><span class="js-name-wave">a</span><span class="js-name-wave">r</span><span class="js-name-wave">i</span><span class="js-name-wave">a</span></span><span class="card-name__line"><span class="js-name-wave">I</span><span class="js-name-wave">g</span><span class="js-name-wave">n</span><span class="js-name-wave">a</span><span class="js-name-wave">c</span><span class="js-name-wave">i</span><span class="js-name-wave">a</span></span><span class="card-name__line"><span class="js-name-wave">F</span><span class="js-name-wave">e</span><span class="js-name-wave">r</span><span class="js-name-wave">r</span><span class="js-name-wave">e</span><span class="js-name-wave">r</span></span></h2>
             <div class="card-divider"></div>
-            <div class="card-text-wrap"><p class="card-text">Mobile photographer exploring light, landscape, and the world in between.</p></div>
+            <div class="card-text-wrap"><p class="card-text">Spiritual oil paint artist exploring devotion, nature, and the human form.</p></div>
             <div class="card-link-wrap"><span class="card-link">Profile ↗</span></div>
           </div>
-          <div class="tile"><img data-src="assets/images/IMG_0008.jpeg" alt="Rural sunset with dramatic clouds"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1306.jpeg" alt="Church with trees and blue sky"></div>
+          <div class="tile"><img data-src="assets/images/CD5B4306-3647-4A3A-B419-63CB3970850D.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/280CB7BC-8F81-4D07-84D0-FDC43EED2471.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
           <div class="tile tile--card js-card" style="background:#C2A8A3">
-            <h2>Landscapes<br>&amp; Light</h2>
+            <h2>Devotion<br>&amp; Spirit</h2>
             <div class="card-divider"></div>
-            <p class="card-text">Shot entirely on mobile. Chasing golden hours, still waters, and wide open skies.</p>
+            <p class="card-text">Buddhist and Hindu deities rendered in oil — visual prayers in pigment and light.</p>
           </div>
-          <div class="tile"><img data-src="assets/images/IMG_0834.jpeg" alt="Mountain reflections"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3687.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.35);transform-origin:center 40%"></div>
           <div class="tile tile--card js-card" style="background:#8A9E8F">
-            <h2>Architecture<br>&amp; Travel</h2>
+            <h2>Figures<br>&amp; Nature</h2>
             <div class="card-divider"></div>
-            <p class="card-text">From Istanbul's grand mosques to baroque interiors — geometry and wonder in built spaces.</p>
+            <p class="card-text">Dreamlike figurative scenes and luminous landscapes through expressive brushwork.</p>
           </div>
-          <div class="tile"><img data-src="assets/images/IMG_1479.jpeg" alt="Nature scene"></div>
+          <div class="tile"><img data-src="assets/images/IMG_7991.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
           <div class="tile tile--card js-card" style="background:#B5A48E">
-            <h2>Seasons<br>&amp; Weather</h2>
+            <h2>Colour<br>&amp; Light</h2>
             <div class="card-divider"></div>
-            <p class="card-text">From frozen alpine winters to golden autumn forests — nature's rhythm, frame by frame.</p>
+            <p class="card-text">Rich palettes and meditative abstractions — each piece an offering of contemplation.</p>
           </div>
-          <div class="tile"><img src="assets/images/IMG_3356.jpeg" alt="Urban landscape" class="is-loaded"></div>
-          <div class="tile"><img src="assets/images/IMG_1308%20(1).jpeg" alt="Mountain vista" class="is-loaded"></div>
+          <div class="tile"><img src="assets/images/IMG_5551.webp" alt="Oil painting by Maria Ignacia Ferrer" class="is-loaded"></div>
+          <div class="tile"><img src="assets/images/IMG_2293.webp" alt="Oil painting by Maria Ignacia Ferrer" class="is-loaded"></div>
         </div>
         <!-- Column 4 -->
         <div class="grid-col">
-          <div class="tile"><img data-src="assets/images/IMG_6440.jpeg" alt="Sunbeams through mountain clouds"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0717.jpeg" alt="Snowy road with yellow bus"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0833.jpeg" alt="Solitary tree by mountain lake"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0410_sm.jpeg" alt="Red bicycle on autumn forest bridge"></div>
-          <div class="tile"><img data-src="assets/images/IMG_4054.jpeg" alt="Milky Way over rocks"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0936.jpeg" alt="Mountain lake vista"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1310.jpeg" alt="Mountain panorama"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1741.jpeg" alt="Scenic landscape"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3368.jpeg" alt="Architecture detail"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3024.jpeg" alt="Mountain landscape"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1845.jpeg" alt="Scenic photograph"></div>
-          <div class="tile"><img data-src="assets/images/IMG_cars_town.jpeg" alt="European town square with vintage cars and church spire"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1862.jpeg" alt="Landscape scene"></div>
+          <div class="tile"><img data-src="assets/images/IMG_7632.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.2);transform-origin:center 40%"></div>
+          <div class="tile"><img data-src="assets/images/IMG_4055.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/BAEF9835-7C12-4A37-BC8A-9C96B013658B.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.15);transform-origin:center center"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2786.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2671.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.15);transform-origin:center center"></div>
+          <div class="tile"><img data-src="assets/images/IMG_5576.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2711.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
         </div>
         <!-- Column 5 -->
         <div class="grid-col">
-          <div class="tile"><img data-src="assets/images/IMG_3352.jpeg" alt="Istanbul street with Galata Tower"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0660.jpeg" alt="Snow-covered forest corridor"></div>
-          <div class="tile"><img data-src="assets/images/IMG_2866.jpeg" alt="Road vanishing toward mountains"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3398%20(1).jpeg" alt="Blue Mosque at sunset"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0585.jpeg" alt="Mountain sunset panorama"></div>
-          <div class="tile"><img data-src="assets/images/IMG_0933.jpeg" alt="Mirror lake reflecting misty mountains"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1311.jpeg" alt="Alpine view"></div>
-          <div class="tile"><img data-src="assets/images/IMG_2003.jpeg" alt="Travel photography"></div>
-          <div class="tile"><img data-src="assets/images/IMG_3857.jpeg" alt="Nature photography"></div>
-          <div class="tile"><img data-src="assets/images/WhatsApp%20Image%202026-01-09%20at%2016.16.39.jpeg" alt="Scenic photograph"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1924.jpeg" alt="Travel photograph"></div>
-          <div class="tile"><img data-src="assets/images/IMG_1307.jpeg" alt="Alpine landscape"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2312.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.15);transform-origin:center center"></div>
+          <div class="tile"><img data-src="assets/images/IMG_3467.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.2);transform-origin:center center"></div>
+          <div class="tile"><img data-src="assets/images/IMG_8099.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.2);transform-origin:center 45%"></div>
+          <div class="tile"><img data-src="assets/images/IMG_2590.webp" alt="Oil painting by Maria Ignacia Ferrer" style="object-fit:cover;transform:scale(1.3);transform-origin:center 35%"></div>
+          <div class="tile"><img data-src="assets/images/86B4A81A-A7FD-40A3-9B6E-0E13F00DC195.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/00E8FCC4-1366-4431-A16B-BD23BAF847FE.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
+          <div class="tile"><img data-src="assets/images/B0A64C4A-238C-4CAB-9012-9D47DDD58F91.webp" alt="Oil painting by Maria Ignacia Ferrer"></div>
         </div>
       </div>
     </div>
@@ -557,11 +622,11 @@
     <div class="footer-bar">
       <ul>
         <li>
-          <a href="https://instagram.com/jackcrvmp" target="_blank" rel="noreferrer" class="btn">
+          <a href="https://instagram.com/galeriaartemaria" target="_blank" rel="noreferrer" class="btn">
             <span>Ig</span>
             <div class="btn__outer">
-              <span class="label">@jackcrump</span>
-              <div class="btn__mask --1"><span>@jackcrump</span></div>
+              <span class="label">@galeriaartemaria</span>
+              <div class="btn__mask --1"><span>@galeriaartemaria</span></div>
             </div>
           </a>
         </li>
@@ -571,24 +636,35 @@
     <!-- Copyright -->
     <span class="copyright theme-1">©2026</span>
 
+    <!-- Lightbox -->
+    <div class="lightbox js-lightbox">
+      <img class="lightbox__img js-lightbox-img" src="" alt="">
+    </div>
+    <div class="lightbox__caption js-lightbox-caption"></div>
+    <button class="lightbox__close js-lightbox-close font-2">Close ↙</button>
+    <div class="lightbox__counter js-lightbox-counter"></div>
+
     <!-- Modal -->
     <div class="modal js-modal">
       <canvas class="modal__3d js-modal-3d"></canvas>
       <div class="modal__content">
         <ul style="display:flex;flex-direction:column">
-          <li class="modal__skill"><div class="modal__skill-num">1</div>Landscapes</li>
-          <li class="modal__skill"><div class="modal__skill-num">2</div>Reflections</li>
-          <li class="modal__skill"><div class="modal__skill-num">3</div>Architecture</li>
-          <li class="modal__skill"><div class="modal__skill-num">4</div>Travel</li>
+          <li class="modal__skill"><div class="modal__skill-num">1</div>Oil Painting</li>
+          <li class="modal__skill"><div class="modal__skill-num">2</div>Figurative</li>
+          <li class="modal__skill"><div class="modal__skill-num">3</div>Devotional</li>
+          <li class="modal__skill"><div class="modal__skill-num">4</div>Landscapes</li>
         </ul>
         <div class="modal__bio">
-          <p>I'm Jack — a mobile phone photographer capturing landscapes, reflections, architecture, and travel moments from across Europe and beyond. Every image shot on a phone, proving that the best camera is the one in your pocket.</p>
-          <p>From frozen alpine lakes to Istanbul's grand mosques, from golden sunflower fields to midnight skies — this is the world as I see it, one frame at a time.</p>
+          <p>Maria is a spiritual oil paint artist whose work explores the intersection of devotion, nature, and the human form. Through rich color palettes and expressive brushwork, her paintings invite contemplation and connection with the sacred.</p>
+          <p>Working primarily in oil on canvas, her subjects range from Buddhist and Hindu deities to dreamlike figurative scenes, luminous landscapes, and meditative abstractions. Each piece is an offering — a visual prayer rendered in pigment and light.</p>
         </div>
+      </div>
+      <div class="modal__portrait">
+        <img src="assets/images/maria-portrait.jpg" alt="Maria Ignacia Ferrer painting in her garden">
       </div>
       <button type="button" class="modal__close js-close-modal font-2">Close ↙</button>
       <span class="modal__copy">©2026</span>
-      <a href="https://maiaa.ai" target="_blank" rel="noreferrer" class="modal__credit">maiaa.ai</a>
+      <a href="https://maiaa.ai" target="_blank" rel="noreferrer" class="modal__credit">maiaa.ai - dev</a>
     </div>
 
   </div>
@@ -598,7 +674,7 @@
 
   <!-- Modal name (outside all containers for independent z-stacking) -->
   <div class="modal__name js-modal-name">
-    <h2><span class="js-name-line" style="display:block"><span class="js-name-char">J</span><span class="js-name-char">a</span><span class="js-name-char">c</span><span class="js-name-char">k</span></span><span class="js-name-line" style="display:block"><span class="js-name-char">C</span><span class="js-name-char">r</span><span class="js-name-char">u</span><span class="js-name-char">m</span><span class="js-name-char">p</span></span></h2>
+    <h2><span class="js-name-line" style="display:block"><span class="js-name-char">M</span><span class="js-name-char">a</span><span class="js-name-char">r</span><span class="js-name-char">i</span><span class="js-name-char">a</span></span><span class="js-name-line" style="display:block"><span class="js-name-char">I</span><span class="js-name-char">g</span><span class="js-name-char">n</span><span class="js-name-char">a</span><span class="js-name-char">c</span><span class="js-name-char">i</span><span class="js-name-char">a</span></span><span class="js-name-line" style="display:block"><span class="js-name-char">F</span><span class="js-name-char">e</span><span class="js-name-char">r</span><span class="js-name-char">r</span><span class="js-name-char">e</span><span class="js-name-char">r</span></span></h2>
   </div>
 
   <!-- Film grain — in root stacking context so it stays above WebGL/modal transitions -->
@@ -751,12 +827,12 @@
     var colData = [];
     var speeds = [0.9, 1.05, 0.85, 1.1, 0.95];
     /* Masonry offsets: fraction of sectionHeight to stagger each column.
-       Center col (2) pushed up so Jack Crump card is centered on load.
+       Center col (2) pushed up so Maria Ferrer card is centered on load.
        Right cols (3,4) shifted up more for visual variety. */
     var isMobilePortrait = window.innerWidth <= 550 && window.innerHeight > window.innerWidth;
     var masonryOffsets = isMobilePortrait
       ? [0.03, -0.01, -0.035, -0.02, -0.03]
-      : [0.03, -0.01, 0.055, -0.06, -0.03];
+      : [-0.04, 0.03, 0.055, 0.03, -0.04];
 
     columns.forEach(function(col, colIdx) {
       var originalTiles = Array.from(col.children);
@@ -1363,7 +1439,7 @@
       });
     })();
 
-    /* --- 3D wireframe icosahedron on canvas (modal interior) --- */
+    /* --- 3D Flower of Life on canvas (modal interior) --- */
     function init3D(cvs) {
       var ctx = cvs.getContext('2d');
       var dpr = window.devicePixelRatio || 1;
@@ -1377,47 +1453,78 @@
       resize();
       window.addEventListener('resize', resize);
 
-      var t = (1 + Math.sqrt(5)) / 2;
-      var verts = [
-        [-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],
-        [0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],
-        [t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]
-      ];
-      var len = Math.sqrt(1 + t * t);
-      verts = verts.map(function(v) { return [v[0]/len, v[1]/len, v[2]/len]; });
-      var edges = [
-        [0,1],[0,5],[0,7],[0,10],[0,11],
-        [1,5],[1,7],[1,8],[1,9],
-        [2,3],[2,4],[2,6],[2,10],[2,11],
-        [3,4],[3,6],[3,8],[3,9],
-        [4,5],[4,9],[4,11],[5,9],[5,11],
-        [6,7],[6,8],[6,10],[7,8],[7,10],
-        [8,9],[10,11]
-      ];
-      var rotX = 0, rotY = 0, rotZ = 0, frameId;
-      function project(v) {
-        var x1 = v[0]*Math.cos(rotY)-v[2]*Math.sin(rotY);
-        var z1 = v[0]*Math.sin(rotY)+v[2]*Math.cos(rotY);
-        var y1 = v[1];
-        var y2 = y1*Math.cos(rotX)-z1*Math.sin(rotX);
-        var z2 = y1*Math.sin(rotX)+z1*Math.cos(rotX);
-        var x3 = x1*Math.cos(rotZ)-y2*Math.sin(rotZ);
-        var y3 = x1*Math.sin(rotZ)+y2*Math.cos(rotZ);
-        var s = Math.min(w,h)*0.28;
-        return [w*0.5+x3*s, h*0.5+y3*s, z2];
+      var R = 1;
+      var centres = [[0, 0, 0]];
+      var i, a;
+      for (i = 0; i < 6; i++) {
+        a = i * Math.PI / 3;
+        centres.push([R * Math.cos(a), R * Math.sin(a), 0]);
       }
+      for (i = 0; i < 6; i++) {
+        a = i * Math.PI / 3;
+        centres.push([2 * R * Math.cos(a), 2 * R * Math.sin(a), 0]);
+        var a2 = a + Math.PI / 6;
+        var d = R * Math.sqrt(3);
+        centres.push([d * Math.cos(a2), d * Math.sin(a2), 0]);
+      }
+
+      var circleRes = 64;
+      var circles = centres.map(function(c) {
+        var pts = [];
+        for (var j = 0; j <= circleRes; j++) {
+          var ang = (j / circleRes) * Math.PI * 2;
+          pts.push([c[0] + R * Math.cos(ang), c[1] + R * Math.sin(ang), c[2]]);
+        }
+        return pts;
+      });
+
+      var rotX = 0, rotY = 0, rotZ = 0, frameId;
+
+      function project(v) {
+        var x1 = v[0] * Math.cos(rotY) - v[2] * Math.sin(rotY);
+        var z1 = v[0] * Math.sin(rotY) + v[2] * Math.cos(rotY);
+        var y1 = v[1];
+        var y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
+        var z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
+        var x3 = x1 * Math.cos(rotZ) - y2 * Math.sin(rotZ);
+        var y3 = x1 * Math.sin(rotZ) + y2 * Math.cos(rotZ);
+        var s = Math.min(w, h) * 0.1;
+        return [w * 0.5 + x3 * s, h * 0.5 + y3 * s, z2];
+      }
+
       function draw() {
-        ctx.clearRect(0,0,w,h);
-        rotY+=0.003; rotX+=0.0015; rotZ+=0.0008;
-        var color = getComputedStyle(document.documentElement).getPropertyValue('--theme-1').trim()||'#2A2725';
-        ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.globalAlpha=0.35;
-        edges.forEach(function(e){var a=project(verts[e[0]]),b=project(verts[e[1]]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});
-        ctx.globalAlpha=0.5; ctx.fillStyle=color;
-        verts.forEach(function(v){var p=project(v),r=2.5+(p[2]+1)*1.5;ctx.beginPath();ctx.arc(p[0],p[1],r,0,Math.PI*2);ctx.fill();});
-        ctx.globalAlpha=1; frameId=requestAnimationFrame(draw);
+        ctx.clearRect(0, 0, w, h);
+        rotY += 0.004; rotX += 0.002; rotZ += 0.001;
+        var color = getComputedStyle(document.documentElement).getPropertyValue('--theme-1').trim() || '#2A2725';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+
+        circles.forEach(function(pts) {
+          ctx.beginPath();
+          for (var j = 0; j < pts.length; j++) {
+            var p = project(pts[j]);
+            if (j === 0) ctx.moveTo(p[0], p[1]);
+            else ctx.lineTo(p[0], p[1]);
+          }
+          ctx.globalAlpha = 0.25;
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.4;
+        centres.forEach(function(c) {
+          var p = project(c);
+          var r = 1.5 + (p[2] + 2) * 0.8;
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], Math.max(r, 0.5), 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.globalAlpha = 1;
+        frameId = requestAnimationFrame(draw);
       }
       draw();
-      return { stop: function(){ cancelAnimationFrame(frameId); } };
+      return { stop: function() { cancelAnimationFrame(frameId); } };
     }
 
     /* --- Open modal — HTML text overlay with pure transform, same easing as fold --- */
@@ -1839,6 +1946,210 @@
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && modalOpen) closeModal();
+      if (e.key === 'Escape' && lightboxOpen) closeLightbox();
+      if (lightboxOpen && e.key === 'ArrowRight') navigateLightbox(1);
+      if (lightboxOpen && e.key === 'ArrowLeft') navigateLightbox(-1);
+    });
+
+    /* --- Painting Lightbox (circle-wipe reveal) --- */
+    var captions = {
+      'IMG_8387': 'Lion Portrait',
+      'IMG_2127': 'Our Lady of Guadalupe',
+      'IMG_9901': 'Buddha in Contemplation',
+      'IMG_4734': 'Buddha in the Waterfall',
+      'CD5B4306': 'Flower of Life',
+      'IMG_7632': 'Christ in Colour',
+      'IMG_6202': 'Humpback Whale',
+      'IMG_4055': 'Reclining by the Window',
+      'IMG_5547': 'Woman in the Garden Chair',
+      'IMG_5573': 'The Mirror Within',
+      'IMG_5551': 'Sleeping by the Waterfall',
+      'IMG_5441': 'Resting in Stillness',
+      'E63F8399': 'Wildflower Meadow',
+      'IMG_6434': 'Red Botanical',
+      'IMG_2133': 'Tulips in Bloom',
+      'IMG_3467': 'Tree of Life Reflection',
+      'IMG_3687': 'White Tiger and Cub',
+      'IMG_7991': 'Pink Peony',
+      'IMG_3539': 'Spiral of Creation',
+      'IMG_7197': 'Deity on the Blue Horse',
+      'IMG_8099': 'Archangel Michael',
+      'BAEF9835': 'Buddha in Red Robe',
+      '00E8FCC4': 'Blue Buddha on the Lake',
+      'IMG_2671': 'Kuan Yin in Golden Light',
+      'IMG_2312': 'Thousand-Armed Avalokiteshvara',
+      'IMG_2711': 'Saraswati on the Lotus',
+      'IMG_0218': 'Medicine Buddha',
+      'IMG_2601': 'Tara with Olive Branch',
+      'IMG_2590': 'Saraswati in the Garden',
+      'D2027AA7': 'Buddha in Warm Light',
+      '280CB7BC': 'River Through the Forest',
+      'IMG_2785': 'Guru Rinpoche',
+      '86B4A81A': 'Golden Buddha',
+      'B0A64C4A': 'Offering to the Divine',
+      'IMG_2786': 'The Smiling Monk',
+      'IMG_5576': 'Flowers in the Vase',
+      'IMG_2293': 'Golden Pavilion in Spring',
+      '38631295': 'Hummingbirds and Blossoms'
+    };
+
+    function getCaptionForSrc(src) {
+      for (var key in captions) {
+        if (src.indexOf(key) !== -1) return captions[key];
+      }
+      return 'Oil Painting by Maria Ignacia Ferrer';
+    }
+
+    var lightbox = document.querySelector('.js-lightbox');
+    var lightboxImg = document.querySelector('.js-lightbox-img');
+    var lightboxCaption = document.querySelector('.js-lightbox-caption');
+    var lightboxCloseBtn = document.querySelector('.js-lightbox-close');
+    var lightboxCounter = document.querySelector('.js-lightbox-counter');
+    var lightboxOpen = false;
+    var lightboxTl = null;
+    var lightboxAnimating = false;
+    var allPaintingTiles = [];
+    var currentLightboxIdx = 0;
+
+    document.querySelectorAll('.tile').forEach(function(tile) {
+      if (tile.classList.contains('tile--card')) return;
+      if (tile.getAttribute('aria-hidden') === 'true') return;
+      var img = tile.querySelector('img');
+      if (!img) return;
+      allPaintingTiles.push({ tile: tile, img: img });
+    });
+
+    function openLightbox(clickedTile, clickedImg, idx) {
+      if (lightboxOpen || lightboxAnimating || modalOpen) return;
+      lightboxAnimating = true;
+      lightboxOpen = true;
+      currentLightboxIdx = idx;
+
+      var src = clickedImg.src || clickedImg.dataset.src;
+      var caption = getCaptionForSrc(src);
+      var rect = clickedTile.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var cx = ((rect.left + rect.width / 2) / vw) * 100;
+      var cy = ((rect.top + rect.height / 2) / vh) * 100;
+
+      lightboxImg.src = src;
+      lightboxCaption.textContent = caption;
+      lightboxCounter.textContent = (idx + 1) + ' / ' + allPaintingTiles.length;
+
+      lightbox.classList.add('is-active');
+      gsap.set(lightbox, { clipPath: 'circle(0% at ' + cx + '% ' + cy + '%)' });
+      gsap.set(lightboxImg, { opacity: 0, scale: 0.8 });
+      gsap.set(lightboxCaption, { opacity: 0, y: 20 });
+      gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
+      gsap.set(lightboxCounter, { opacity: 0 });
+
+      if (modalName) modalName.style.visibility = 'hidden';
+
+      if (lightboxTl) lightboxTl.kill();
+      lightboxTl = gsap.timeline({
+        onComplete: function() { lightboxAnimating = false; }
+      });
+
+      lightboxTl.to(lightbox, {
+        clipPath: 'circle(150% at ' + cx + '% ' + cy + '%)',
+        duration: 0.9, ease: 'power3.inOut'
+      }, 0);
+      lightboxTl.to(lightboxImg, {
+        opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out'
+      }, 0.25);
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.55);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.55);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.6);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, 0.55);
+    }
+
+    function closeLightbox() {
+      if (!lightboxOpen || lightboxAnimating) return;
+      lightboxAnimating = true;
+      lightboxOpen = false;
+
+      var tileObj = allPaintingTiles[currentLightboxIdx];
+      var rect = tileObj.tile.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var cx = ((rect.left + rect.width / 2) / vw) * 100;
+      var cy = ((rect.top + rect.height / 2) / vh) * 100;
+
+      gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
+
+      if (lightboxTl) lightboxTl.kill();
+      lightboxTl = gsap.timeline({
+        onComplete: function() {
+          lightboxAnimating = false;
+          lightbox.classList.remove('is-active');
+          gsap.set(lightbox, { clipPath: 'circle(0% at 50% 50%)' });
+          gsap.set(lightboxImg, { clearProps: 'all' });
+          if (modalName) modalName.style.visibility = 'visible';
+        }
+      });
+
+      lightboxTl.to(lightboxCaption, { opacity: 0, y: 10, duration: 0.2, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxImg, {
+        opacity: 0, scale: 0.8, duration: 0.4, ease: 'power2.in'
+      }, 0.05);
+      lightboxTl.to(lightbox, {
+        clipPath: 'circle(0% at ' + cx + '% ' + cy + '%)',
+        duration: 0.7, ease: 'power3.inOut'
+      }, 0.15);
+    }
+
+    function navigateLightbox(dir) {
+      if (!lightboxOpen || lightboxAnimating) return;
+      var newIdx = (currentLightboxIdx + dir + allPaintingTiles.length) % allPaintingTiles.length;
+      var tileObj = allPaintingTiles[newIdx];
+      var src = tileObj.img.src || tileObj.img.dataset.src;
+      var caption = getCaptionForSrc(src);
+      currentLightboxIdx = newIdx;
+
+      gsap.to(lightboxImg, {
+        opacity: 0, scale: 0.95, duration: 0.2, ease: 'power2.in',
+        onComplete: function() {
+          lightboxImg.src = src;
+          lightboxCaption.textContent = caption;
+          lightboxCounter.textContent = (newIdx + 1) + ' / ' + allPaintingTiles.length;
+          gsap.to(lightboxImg, { opacity: 1, scale: 1, duration: 0.3, ease: 'power2.out' });
+          gsap.fromTo(lightboxCaption, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
+        }
+      });
+    }
+
+    allPaintingTiles.forEach(function(tileObj, idx) {
+      tileObj.tile.style.cursor = 'pointer';
+      tileObj.tile.addEventListener('click', function() {
+        openLightbox(tileObj.tile, tileObj.img, idx);
+      });
+    });
+
+    document.querySelectorAll('.tile[aria-hidden="true"]').forEach(function(tile) {
+      if (tile.classList.contains('tile--card')) return;
+      var img = tile.querySelector('img');
+      if (!img) return;
+      tile.style.cursor = 'pointer';
+      tile.addEventListener('click', function() {
+        var src = img.src || img.dataset.src;
+        if (!src) return;
+        var fname = src.split('/').pop();
+        for (var i = 0; i < allPaintingTiles.length; i++) {
+          var oSrc = allPaintingTiles[i].img.src || allPaintingTiles[i].img.dataset.src;
+          if (oSrc && oSrc.split('/').pop() === fname) {
+            openLightbox(tile, img, i);
+            return;
+          }
+        }
+      });
+    });
+
+    lightboxCloseBtn.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', function(e) {
+      if (e.target === lightbox) closeLightbox();
     });
 
   })();
