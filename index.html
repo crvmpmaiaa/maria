@@ -469,7 +469,7 @@
       background: var(--card-bg);
       pointer-events: none;
       visibility: hidden;
-      clip-path: circle(0% at 50% 50%);
+      clip-path: inset(50% 50% 50% 50%);
     }
     .lightbox.is-active { pointer-events: auto; visibility: visible; }
     .lightbox__img {
@@ -2053,8 +2053,6 @@
       var rect = clickedTile.getBoundingClientRect();
       var vw = window.innerWidth;
       var vh = window.innerHeight;
-      var cx = ((rect.left + rect.width / 2) / vw) * 100;
-      var cy = ((rect.top + rect.height / 2) / vh) * 100;
 
       /* Sample colour from the tile image */
       var bgColour = getAvgColour(clickedImg);
@@ -2063,16 +2061,26 @@
       lightboxCaption.textContent = caption;
       lightboxCounter.textContent = (idx + 1) + ' / ' + allPaintingTiles.length;
 
-      /* Position image at the tile's location */
+      /* Inset clip from tile's position */
+      var inT = (rect.top / vh) * 100;
+      var inR = ((vw - rect.right) / vw) * 100;
+      var inB = ((vh - rect.bottom) / vh) * 100;
+      var inL = (rect.left / vw) * 100;
+
+      /* Position image at the tile */
       gsap.set(lightboxImg, {
         left: rect.left, top: rect.top,
         width: rect.width, height: rect.height,
-        opacity: 1, borderRadius: '2px'
+        opacity: 1, borderRadius: '2px',
+        rotateY: 0, rotateX: 0, scale: 1,
+        transformPerspective: 800, transformOrigin: 'center center'
       });
 
       lightbox.style.background = bgColour;
       lightbox.classList.add('is-active');
-      gsap.set(lightbox, { clipPath: 'circle(0% at ' + cx + '% ' + cy + '%)' });
+      gsap.set(lightbox, {
+        clipPath: 'inset(' + inT + '% ' + inR + '% ' + inB + '% ' + inL + '%)'
+      });
       gsap.set(lightboxCaption, { opacity: 0, y: 20 });
       gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
       gsap.set(lightboxCounter, { opacity: 0 });
@@ -2086,30 +2094,47 @@
       var finalLeft = (vw - finalW) / 2;
       var finalTop = (vh - finalH) / 2 - 15;
 
+      /* Is tile left or right of centre? Wave folds from that side */
+      var fromLeft = rect.left + rect.width / 2 < vw / 2;
+
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() { lightboxAnimating = false; }
       });
 
-      /* 1. Circle wipe reveals the coloured background */
+      /* 1. Background wipe expands from tile rect to full screen */
       lightboxTl.to(lightbox, {
-        clipPath: 'circle(150% at ' + cx + '% ' + cy + '%)',
-        duration: 0.85, ease: 'power3.inOut'
+        clipPath: 'inset(0% 0% 0% 0%)',
+        duration: 0.8, ease: 'power3.inOut'
       }, 0);
 
-      /* 2. Image sweeps from tile position to centre */
+      /* 2. Image: wave fold — tilts into 3D as it moves, then settles flat */
+      var peakRotate = fromLeft ? 12 : -12;
+
+      /* Phase A: lift off tile with a 3D tilt */
       lightboxTl.to(lightboxImg, {
-        left: finalLeft, top: finalTop,
+        left: finalLeft + (fromLeft ? -40 : 40),
+        top: finalTop + 10,
         width: finalW, height: finalH,
-        borderRadius: '4px',
-        duration: 0.9, ease: 'power3.inOut'
+        rotateY: peakRotate,
+        scale: 0.95,
+        duration: 0.5, ease: 'power2.in'
       }, 0.05);
 
-      /* 3. Caption + controls fade in */
-      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.6);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.6);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.65);
-      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, 0.6);
+      /* Phase B: settle into centre, wave flattens out */
+      lightboxTl.to(lightboxImg, {
+        left: finalLeft, top: finalTop,
+        rotateY: 0,
+        scale: 1,
+        borderRadius: '4px',
+        duration: 0.55, ease: 'power2.out'
+      }, 0.55);
+
+      /* 3. Caption + controls */
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.7);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.7);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.75);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, 0.7);
     }
 
     function closeLightbox() {
@@ -2117,13 +2142,18 @@
       lightboxAnimating = true;
       lightboxOpen = false;
 
-      /* Animate back to tile position */
       var tileObj = allPaintingTiles[currentLightboxIdx];
       var rect = tileObj.tile.getBoundingClientRect();
       var vw = window.innerWidth;
       var vh = window.innerHeight;
-      var cx = ((rect.left + rect.width / 2) / vw) * 100;
-      var cy = ((rect.top + rect.height / 2) / vh) * 100;
+
+      var inT = (rect.top / vh) * 100;
+      var inR = ((vw - rect.right) / vw) * 100;
+      var inB = ((vh - rect.bottom) / vh) * 100;
+      var inL = (rect.left / vw) * 100;
+
+      var fromLeft = rect.left + rect.width / 2 < vw / 2;
+      var peakRotate = fromLeft ? -12 : 12;
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
 
@@ -2132,7 +2162,7 @@
         onComplete: function() {
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
-          gsap.set(lightbox, { clipPath: 'circle(0% at 50% 50%)' });
+          gsap.set(lightbox, { clipPath: 'inset(50% 50% 50% 50%)' });
           gsap.set(lightboxImg, { clearProps: 'all' });
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
@@ -2143,17 +2173,26 @@
       lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
 
-      /* 2. Image sweeps back to tile */
+      /* 2. Image: wave fold back — tilts then returns to tile */
+      lightboxTl.to(lightboxImg, {
+        rotateY: peakRotate,
+        scale: 0.95,
+        left: rect.left + (fromLeft ? 40 : -40),
+        top: rect.top - 10,
+        duration: 0.45, ease: 'power2.in'
+      }, 0.05);
+
       lightboxTl.to(lightboxImg, {
         left: rect.left, top: rect.top,
         width: rect.width, height: rect.height,
+        rotateY: 0, scale: 1,
         borderRadius: '2px',
-        duration: 0.75, ease: 'power3.inOut'
-      }, 0.05);
+        duration: 0.4, ease: 'power2.out'
+      }, 0.5);
 
-      /* 3. Circle wipe collapses */
+      /* 3. Background collapses back to tile rect */
       lightboxTl.to(lightbox, {
-        clipPath: 'circle(0% at ' + cx + '% ' + cy + '%)',
+        clipPath: 'inset(' + inT + '% ' + inR + '% ' + inB + '% ' + inL + '%)',
         duration: 0.7, ease: 'power3.inOut'
       }, 0.2);
     }
@@ -2168,25 +2207,24 @@
       var newBg = getAvgColour(tileObj.img);
       currentLightboxIdx = newIdx;
 
-      var vw = window.innerWidth;
-      var vh = window.innerHeight;
-      var sweepDir = dir > 0 ? 30 : -30;
+      var sweepAngle = dir > 0 ? -15 : 15;
 
-      /* Sweep current image out */
+      /* Wave current image out with 3D tilt */
       gsap.to(lightboxImg, {
-        x: sweepDir * -1, opacity: 0, duration: 0.25, ease: 'power2.in',
+        rotateY: sweepAngle, opacity: 0, x: dir > 0 ? -60 : 60,
+        duration: 0.3, ease: 'power2.in',
         onComplete: function() {
           lightboxImg.src = src;
           lightboxCaption.textContent = caption;
           lightboxCounter.textContent = (newIdx + 1) + ' / ' + allPaintingTiles.length;
 
-          /* Crossfade background colour */
           gsap.to(lightbox, { background: newBg, duration: 0.4, ease: 'power2.inOut' });
 
-          /* Sweep new image in from opposite side */
+          /* Wave new image in from opposite side */
           gsap.fromTo(lightboxImg,
-            { x: sweepDir, opacity: 0 },
-            { x: 0, opacity: 1, duration: 0.35, ease: 'power2.out',
+            { rotateY: -sweepAngle, opacity: 0, x: dir > 0 ? 60 : -60 },
+            { rotateY: 0, opacity: 1, x: 0,
+              duration: 0.4, ease: 'power2.out',
               onComplete: function() { lightboxAnimating = false; }
             }
           );
