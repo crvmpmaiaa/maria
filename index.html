@@ -2125,24 +2125,25 @@
         }
       }, 0);
 
-      /* 2. Near end of fold — crossfade WebGL to real fullscreen image */
-      var revealAt = foldDur * 0.7;
+      /* 2. When fold is done — keep WebGL visible, it IS the fullscreen painting.
+            Show controls on top. Fade in real image behind WebGL, then swap. */
       lightboxTl.add(function() {
+        /* Show lightbox + image behind the WebGL */
         lightbox.classList.add('is-active');
-      }, revealAt);
-      lightboxTl.to(lightbox, { opacity: 1, duration: 0.4, ease: 'power2.out' }, revealAt);
-      lightboxTl.to(lightboxImg, { opacity: 1, duration: 0.5, ease: 'power2.out' }, revealAt);
-      lightboxTl.to(planeMat.uniforms.u_opacity, {
-        value: 0, duration: 0.4,
-        onUpdate: renderWebGL,
-        onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
-      }, revealAt + 0.15);
+        gsap.set(lightbox, { opacity: 1 });
+        gsap.set(lightboxImg, { opacity: 1 });
+      }, foldDur * 0.85);
 
-      /* 3. Caption + controls */
-      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, revealAt + 0.3);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, revealAt + 0.3);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, revealAt + 0.4);
-      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, revealAt + 0.3);
+      /* Caption + controls appear once fold is settled */
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, foldDur * 0.85);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur * 0.85);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur * 0.9);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, foldDur * 0.85);
+
+      /* Now seamlessly remove WebGL — the real image is identical underneath */
+      lightboxTl.add(function() {
+        webglCanvas.style.visibility = 'hidden';
+      }, foldDur + 0.1);
     }
 
     function closeLightbox() {
