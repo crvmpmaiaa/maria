@@ -473,14 +473,10 @@
     .lightbox.is-active { pointer-events: auto; visibility: visible; }
     .lightbox__img {
       position: fixed;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      max-width: 55vw;
-      max-height: 75vh;
       object-fit: contain;
-      border-radius: 4px;
+      border-radius: 2px;
       z-index: 911;
-      opacity: 0;
+      will-change: transform, left, top, width, height;
     }
     .lightbox__caption {
       position: fixed;
@@ -527,7 +523,7 @@
       .lightbox__close { top: 3rem; right: 3rem; }
       .lightbox__counter { bottom: 3rem; right: 3rem; }
       .lightbox__caption { bottom: 3rem; font-size: 14px; }
-      .lightbox__img { max-width: 90vw; max-height: 65vh; }
+      .lightbox__img { max-width: 90vw; max-height: 70vh; }
     }
 
     /* Focus */
@@ -2104,15 +2100,30 @@
       webglCanvas.style.visibility = 'visible';
       renderWebGL();
 
+      /* Calculate final centred position */
+      var imgRatio = rect.width / rect.height;
+      var finalW = Math.min(vw * 0.55, vh * 0.7 * imgRatio);
+      var finalH = finalW / imgRatio;
+      if (finalH > vh * 0.75) { finalH = vh * 0.75; finalW = finalH * imgRatio; }
+      var finalLeft = (vw - finalW) / 2;
+      var finalTop = (vh - finalH) / 2 - 10;
+
       /* Prep lightbox behind the fold */
       lightbox.style.background = bgColour;
       gsap.set(lightbox, { clipPath: 'inset(0% 0% 0% 0%)' });
-      gsap.set(lightboxImg, { opacity: 0 });
+
+      /* Position image at the tile — visible from the start */
+      gsap.set(lightboxImg, {
+        left: rect.left, top: rect.top,
+        width: rect.width, height: rect.height,
+        opacity: 1, borderRadius: '2px'
+      });
+
       gsap.set(lightboxCaption, { opacity: 0, y: 20 });
       gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
       gsap.set(lightboxCounter, { opacity: 0 });
 
-      /* Same fold duration + easing as profile card */
+      /* Same fold duration as profile card */
       var foldDur = 1.8;
 
       if (lightboxTl) lightboxTl.kill();
@@ -2129,25 +2140,32 @@
         }
       }, 0);
 
-      /* 2. Show lightbox behind at ~60% of fold */
+      /* 2. Image sweeps from tile to centre — follows the fold timing */
+      lightboxTl.to(lightboxImg, {
+        left: finalLeft, top: finalTop,
+        width: finalW, height: finalH,
+        borderRadius: '4px',
+        duration: foldDur * 0.85, ease: 'power2.out'
+      }, 0);
+
+      /* 3. Show lightbox behind at ~55% */
       lightboxTl.add(function() {
         lightbox.classList.add('is-active');
-      }, foldDur * 0.55);
+      }, foldDur * 0.5);
 
-      /* 3. Crossfade: WebGL out, real content in — at ~70% of fold */
+      /* 4. Fade out WebGL at ~65% */
       var fadeAt = foldDur * 0.65;
       lightboxTl.to(planeMat.uniforms.u_opacity, {
         value: 0, duration: 0.4,
         onUpdate: renderWebGL,
         onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
       }, fadeAt);
-      lightboxTl.to(lightboxImg, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt);
 
-      /* 4. Caption + controls — near end of fold */
-      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, fadeAt + 0.2);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt + 0.2);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt + 0.3);
-      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, fadeAt + 0.2);
+      /* 5. Caption + controls */
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, fadeAt + 0.1);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt + 0.1);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, fadeAt + 0.2);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, fadeAt + 0.1);
     }
 
     function closeLightbox() {
@@ -2195,8 +2213,7 @@
       lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
 
-      /* 2. Fade out lightbox, show WebGL fold surface */
-      lightboxTl.to(lightboxImg, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0.05);
+      /* 2. Show WebGL fold surface */
       lightboxTl.add(function() {
         webglCanvas.style.visibility = 'visible';
       }, 0.1);
@@ -2205,17 +2222,16 @@
         onUpdate: renderWebGL
       }, 0.1);
 
-      /* 3. Hide lightbox behind fold */
+      /* 3. Hide lightbox bg behind fold */
       lightboxTl.add(function() {
         lightbox.classList.remove('is-active');
       }, 0.35);
 
-      /* 4. WebGL fold collapses — same timing as profile card close */
+      /* 4. WebGL fold collapses — same timing as profile card */
       lightboxTl.to(transitionProxy, {
         progress: 0, duration: foldDur, ease: 'power3.inOut',
         onUpdate: function() {
           var p = transitionProxy.progress;
-          /* Track live tile position */
           var liveRect = tileObj.tile.getBoundingClientRect();
           planeMat.uniforms.u_cardRect.value.set(liveRect.left, liveRect.top, liveRect.width, liveRect.height);
           planeMat.uniforms.u_progress.value = p;
@@ -2223,6 +2239,19 @@
         },
         onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
       }, foldStart);
+
+      /* 5. Image sweeps back to tile — matches fold timing */
+      lightboxTl.to(lightboxImg, {
+        left: rect.left, top: rect.top,
+        width: rect.width, height: rect.height,
+        borderRadius: '2px',
+        duration: foldDur * 0.85, ease: 'power3.inOut'
+      }, foldStart);
+
+      /* 6. Fade out image near end so it doesn't sit on top of the tile */
+      lightboxTl.to(lightboxImg, {
+        opacity: 0, duration: 0.3, ease: 'power2.in'
+      }, foldStart + foldDur * 0.65);
     }
 
     function navigateLightbox(dir) {
