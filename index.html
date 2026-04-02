@@ -2088,8 +2088,8 @@
 
       if (modalName) modalName.style.display = 'none';
 
-      /* Render the painting + bg colour onto the WebGL fold texture */
-      renderImageFoldTexture(clickedImg, bgColour);
+      /* Solid colour fold texture — same approach as profile card */
+      renderFoldTexture(bgColour, bgColour, [], 0, 0);
 
       /* Set WebGL uniforms to tile position */
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
@@ -2161,8 +2161,8 @@
       var vh = window.innerHeight;
       var bgColour = lightbox.style.background || '#D4CEC7';
 
-      /* Re-render fold texture for reverse */
-      renderImageFoldTexture(tileObj.img, bgColour);
+      /* Solid colour fold texture for reverse — same as profile card */
+      renderFoldTexture(bgColour, bgColour, [], 0, 0);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
       /* Same anchor bias as profile card */
