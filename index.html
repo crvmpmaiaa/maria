@@ -469,17 +469,18 @@
       background: var(--card-bg);
       pointer-events: none;
       visibility: hidden;
-      clip-path: inset(50% 50% 50% 50%);
     }
     .lightbox.is-active { pointer-events: auto; visibility: visible; }
     .lightbox__img {
       position: fixed;
-      max-width: 60vw;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 55vw;
       max-height: 75vh;
       object-fit: contain;
-      border-radius: 3px;
-      will-change: transform;
+      border-radius: 4px;
       z-index: 911;
+      opacity: 0;
     }
     .lightbox__caption {
       position: fixed;
@@ -1211,6 +1212,32 @@
         }
       }
       /* Dispose old texture and create a fresh one */
+      if (foldTexture) foldTexture.dispose();
+      foldTexture = new THREE.CanvasTexture(offCanvas);
+      foldTexture.minFilter = THREE.LinearFilter;
+      foldTexture.magFilter = THREE.LinearFilter;
+      planeMat.uniforms.u_texture.value = foldTexture;
+    }
+
+    /* Render a painting image onto the fold texture for lightbox transitions */
+    function renderImageFoldTexture(img, bgColor) {
+      var dpr = Math.min(window.devicePixelRatio, 2);
+      var w = Math.round(window.innerWidth * dpr);
+      var h = Math.round(window.innerHeight * dpr);
+      offCanvas.width = w;
+      offCanvas.height = h;
+      offCtx.fillStyle = bgColor;
+      offCtx.fillRect(0, 0, w, h);
+      /* Draw image centred */
+      var imgRatio = img.naturalWidth / img.naturalHeight;
+      var maxW = w * 0.55;
+      var maxH = h * 0.75;
+      var drawW, drawH;
+      if (maxW / maxH > imgRatio) { drawH = maxH; drawW = maxH * imgRatio; }
+      else { drawW = maxW; drawH = maxW / imgRatio; }
+      var dx = (w - drawW) / 2;
+      var dy = (h - drawH) / 2 - 15 * dpr;
+      try { offCtx.drawImage(img, dx, dy, drawW, drawH); } catch(e) {}
       if (foldTexture) foldTexture.dispose();
       foldTexture = new THREE.CanvasTexture(offCanvas);
       foldTexture.minFilter = THREE.LinearFilter;
@@ -2053,88 +2080,79 @@
       var rect = clickedTile.getBoundingClientRect();
       var vw = window.innerWidth;
       var vh = window.innerHeight;
-
-      /* Sample colour from the tile image */
       var bgColour = getAvgColour(clickedImg);
 
       lightboxImg.src = src;
       lightboxCaption.textContent = caption;
       lightboxCounter.textContent = (idx + 1) + ' / ' + allPaintingTiles.length;
 
-      /* Inset clip from tile's position */
-      var inT = (rect.top / vh) * 100;
-      var inR = ((vw - rect.right) / vw) * 100;
-      var inB = ((vh - rect.bottom) / vh) * 100;
-      var inL = (rect.left / vw) * 100;
+      if (modalName) modalName.style.display = 'none';
 
-      /* Position image at the tile */
-      gsap.set(lightboxImg, {
-        left: rect.left, top: rect.top,
-        width: rect.width, height: rect.height,
-        opacity: 1, borderRadius: '2px',
-        rotateY: 0, rotateX: 0, scale: 1,
-        transformPerspective: 800, transformOrigin: 'center center'
-      });
+      /* Render the painting + bg colour onto the WebGL fold texture */
+      renderImageFoldTexture(clickedImg, bgColour);
 
+      /* Set WebGL uniforms to tile position */
+      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
+      planeMat.uniforms.u_screen.value.set(vw, vh);
+      planeMat.uniforms.u_opacity.value = 1.0;
+
+      /* Anchor direction: from tile toward screen centre */
+      var tileCx = (rect.left + rect.width / 2) / vw - 0.5;
+      var tileCy = -((rect.top + rect.height / 2) / vh - 0.5);
+      planeMat.uniforms.u_anchor.value.set(-tileCx, -tileCy);
+
+      transitionProxy.progress = 0;
+      planeMat.uniforms.u_progress.value = 0;
+      webglCanvas.style.visibility = 'visible';
+      renderWebGL();
+
+      /* Prep lightbox behind the fold */
       lightbox.style.background = bgColour;
-      lightbox.classList.add('is-active');
-      gsap.set(lightbox, {
-        clipPath: 'inset(' + inT + '% ' + inR + '% ' + inB + '% ' + inL + '%)'
+      gsap.set(lightbox, { clipPath: 'inset(0% 0% 0% 0%)' });
+      gsap.set(lightboxImg, {
+        left: (vw - vw * 0.55) / 2, top: (vh - vh * 0.75) / 2 - 15,
+        width: 'auto', height: 'auto',
+        maxWidth: '55vw', maxHeight: '75vh',
+        opacity: 0, position: 'fixed',
+        left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)'
       });
       gsap.set(lightboxCaption, { opacity: 0, y: 20 });
       gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
       gsap.set(lightboxCounter, { opacity: 0 });
-
-      if (modalName) modalName.style.display = 'none';
-
-      /* Final centred position */
-      var finalW = Math.min(vw * 0.55, vh * 0.65 * (rect.width / rect.height));
-      var finalH = finalW * (rect.height / rect.width);
-      if (finalH > vh * 0.75) { finalH = vh * 0.75; finalW = finalH * (rect.width / rect.height); }
-      var finalLeft = (vw - finalW) / 2;
-      var finalTop = (vh - finalH) / 2 - 15;
-
-      /* Is tile left or right of centre? Wave folds from that side */
-      var fromLeft = rect.left + rect.width / 2 < vw / 2;
 
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() { lightboxAnimating = false; }
       });
 
-      /* 1. Background wipe expands from tile rect to full screen */
-      lightboxTl.to(lightbox, {
-        clipPath: 'inset(0% 0% 0% 0%)',
-        duration: 0.8, ease: 'power3.inOut'
+      /* 1. WebGL fold expands from tile to fullscreen */
+      lightboxTl.to(transitionProxy, {
+        progress: 1, duration: 1.0, ease: 'power3.inOut',
+        onUpdate: function() {
+          planeMat.uniforms.u_progress.value = transitionProxy.progress;
+          renderWebGL();
+        }
       }, 0);
 
-      /* 2. Image: wave fold — tilts into 3D as it moves, then settles flat */
-      var peakRotate = fromLeft ? 12 : -12;
+      /* 2. At ~65%, show the lightbox behind and start fading in real content */
+      lightboxTl.add(function() {
+        lightbox.classList.add('is-active');
+      }, 0.6);
 
-      /* Phase A: lift off tile with a 3D tilt */
-      lightboxTl.to(lightboxImg, {
-        left: finalLeft + (fromLeft ? -40 : 40),
-        top: finalTop + 10,
-        width: finalW, height: finalH,
-        rotateY: peakRotate,
-        scale: 0.95,
-        duration: 0.5, ease: 'power2.in'
-      }, 0.05);
+      /* 3. Fade out WebGL, fade in lightbox content */
+      lightboxTl.to(planeMat.uniforms.u_opacity, {
+        value: 0, duration: 0.3,
+        onUpdate: renderWebGL,
+        onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
+      }, 0.75);
+      lightboxTl.to(lightboxImg, { opacity: 1, duration: 0.35, ease: 'power2.out' }, 0.75);
 
-      /* Phase B: settle into centre, wave flattens out */
-      lightboxTl.to(lightboxImg, {
-        left: finalLeft, top: finalTop,
-        rotateY: 0,
-        scale: 1,
-        borderRadius: '4px',
-        duration: 0.55, ease: 'power2.out'
-      }, 0.55);
-
-      /* 3. Caption + controls */
-      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.7);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.7);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.75);
-      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, 0.7);
+      /* 4. Caption + controls */
+      lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 0.85);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.85);
+      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.9);
+      lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, 0.85);
     }
 
     function closeLightbox() {
@@ -2146,14 +2164,15 @@
       var rect = tileObj.tile.getBoundingClientRect();
       var vw = window.innerWidth;
       var vh = window.innerHeight;
+      var bgColour = lightbox.style.background || '#D4CEC7';
 
-      var inT = (rect.top / vh) * 100;
-      var inR = ((vw - rect.right) / vw) * 100;
-      var inB = ((vh - rect.bottom) / vh) * 100;
-      var inL = (rect.left / vw) * 100;
-
-      var fromLeft = rect.left + rect.width / 2 < vw / 2;
-      var peakRotate = fromLeft ? -12 : 12;
+      /* Re-render fold texture for reverse */
+      renderImageFoldTexture(tileObj.img, bgColour);
+      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
+      planeMat.uniforms.u_screen.value.set(vw, vh);
+      var tileCx = (rect.left + rect.width / 2) / vw - 0.5;
+      var tileCy = -((rect.top + rect.height / 2) / vh - 0.5);
+      planeMat.uniforms.u_anchor.value.set(-tileCx, -tileCy);
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
 
@@ -2162,39 +2181,40 @@
         onComplete: function() {
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
-          gsap.set(lightbox, { clipPath: 'inset(50% 50% 50% 50%)' });
           gsap.set(lightboxImg, { clearProps: 'all' });
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
 
-      /* 1. Caption + controls out */
+      /* 1. Fade out caption + controls */
       lightboxTl.to(lightboxCaption, { opacity: 0, y: 10, duration: 0.2, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0);
 
-      /* 2. Image: wave fold back — tilts then returns to tile */
-      lightboxTl.to(lightboxImg, {
-        rotateY: peakRotate,
-        scale: 0.95,
-        left: rect.left + (fromLeft ? 40 : -40),
-        top: rect.top - 10,
-        duration: 0.45, ease: 'power2.in'
-      }, 0.05);
+      /* 2. Fade out lightbox content, show WebGL */
+      lightboxTl.to(lightboxImg, { opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.1);
+      lightboxTl.add(function() {
+        transitionProxy.progress = 1;
+        planeMat.uniforms.u_progress.value = 1;
+        planeMat.uniforms.u_opacity.value = 1;
+        webglCanvas.style.visibility = 'visible';
+        renderWebGL();
+      }, 0.3);
 
-      lightboxTl.to(lightboxImg, {
-        left: rect.left, top: rect.top,
-        width: rect.width, height: rect.height,
-        rotateY: 0, scale: 1,
-        borderRadius: '2px',
-        duration: 0.4, ease: 'power2.out'
-      }, 0.5);
+      /* 3. WebGL fold collapses back to tile */
+      lightboxTl.to(transitionProxy, {
+        progress: 0, duration: 0.9, ease: 'power3.inOut',
+        onUpdate: function() {
+          planeMat.uniforms.u_progress.value = transitionProxy.progress;
+          renderWebGL();
+        },
+        onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
+      }, 0.35);
 
-      /* 3. Background collapses back to tile rect */
-      lightboxTl.to(lightbox, {
-        clipPath: 'inset(' + inT + '% ' + inR + '% ' + inB + '% ' + inL + '%)',
-        duration: 0.7, ease: 'power3.inOut'
-      }, 0.2);
+      /* 4. Hide lightbox at end */
+      lightboxTl.add(function() {
+        lightbox.classList.remove('is-active');
+      }, 0.9);
     }
 
     function navigateLightbox(dir) {
@@ -2207,24 +2227,16 @@
       var newBg = getAvgColour(tileObj.img);
       currentLightboxIdx = newIdx;
 
-      var sweepAngle = dir > 0 ? -15 : 15;
-
-      /* Wave current image out with 3D tilt */
       gsap.to(lightboxImg, {
-        rotateY: sweepAngle, opacity: 0, x: dir > 0 ? -60 : 60,
-        duration: 0.3, ease: 'power2.in',
+        opacity: 0, x: dir > 0 ? -40 : 40, duration: 0.25, ease: 'power2.in',
         onComplete: function() {
           lightboxImg.src = src;
           lightboxCaption.textContent = caption;
           lightboxCounter.textContent = (newIdx + 1) + ' / ' + allPaintingTiles.length;
-
           gsap.to(lightbox, { background: newBg, duration: 0.4, ease: 'power2.inOut' });
-
-          /* Wave new image in from opposite side */
           gsap.fromTo(lightboxImg,
-            { rotateY: -sweepAngle, opacity: 0, x: dir > 0 ? 60 : -60 },
-            { rotateY: 0, opacity: 1, x: 0,
-              duration: 0.4, ease: 'power2.out',
+            { opacity: 0, x: dir > 0 ? 40 : -40 },
+            { opacity: 1, x: 0, duration: 0.35, ease: 'power2.out',
               onComplete: function() { lightboxAnimating = false; }
             }
           );
