@@ -489,7 +489,8 @@
       font-family: 'Cormorant Garamond', serif;
       font-weight: 300;
       font-size: clamp(16px, 2.4rem, 28px);
-      color: var(--theme-1);
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
       letter-spacing: -0.02em;
       text-align: center;
       white-space: nowrap;
@@ -505,7 +506,8 @@
       font-size: 20px;
       text-transform: uppercase;
       cursor: pointer;
-      color: var(--theme-1);
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
       z-index: 920;
       opacity: 0;
       pointer-events: none;
@@ -517,15 +519,16 @@
       right: 5rem;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 1.6rem;
-      color: var(--theme-1);
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
       opacity: 0;
       z-index: 920;
       pointer-events: none;
     }
     @media(orientation:portrait) and (max-width:440px) {
-      .lightbox__close { top: 3rem; right: 3rem; }
-      .lightbox__counter { bottom: 3rem; right: 3rem; }
-      .lightbox__caption { bottom: 3rem; font-size: 14px; }
+      .lightbox__close { top: 2rem; right: 2rem; font-size: 16px; min-width: 44px; min-height: 44px; display: flex; align-items: center; }
+      .lightbox__counter { bottom: 2rem; right: 2rem; }
+      .lightbox__caption { bottom: 2rem; font-size: 13px; max-width: 70vw; }
       .lightbox__img { width: 100%; min-height: 100vh; }
     }
 
@@ -2165,22 +2168,19 @@
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
 
-      /* Render the painting onto the fold */
+      /* Render the painting onto the fold at current pan position */
       var currentY = gsap.getProperty(lightboxImg, 'y') || 0;
       renderImageFoldTexture(tileObj.img, currentY);
-      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
+
+      /* Set up WebGL at fullscreen, targeting off-screen for collapse */
+      planeMat.uniforms.u_cardRect.value.set(-rect.width, -rect.height, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
       transitionProxy.progress = 1;
       planeMat.uniforms.u_progress.value = 1;
       planeMat.uniforms.u_opacity.value = 1;
-
-      /* Show WebGL immediately behind the image */
       webglCanvas.style.visibility = 'visible';
       renderWebGL();
-
-      /* Target off-screen for the fold collapse */
-      planeMat.uniforms.u_cardRect.value.set(-rect.width, -rect.height, rect.width, rect.height);
 
       var foldDur = 1.8;
 
@@ -2287,12 +2287,31 @@
       if (!lightboxPanEnabled || !lightboxOpen) return;
       var vh = window.innerHeight;
       var imgH = lightboxImg.offsetHeight;
-      if (imgH <= vh) return; /* no pan needed if image fits */
-      var mouseY = e.clientY / vh; /* 0 at top, 1 at bottom */
+      if (imgH <= vh) return;
+      var mouseY = e.clientY / vh;
       var maxShift = imgH - vh;
       var shift = -mouseY * maxShift;
       gsap.to(lightboxImg, { y: shift, duration: 0.6, ease: 'power2.out', overwrite: true });
     });
+
+    /* Touch pan for mobile */
+    var touchStartY = 0;
+    var touchStartImgY = 0;
+    lightbox.addEventListener('touchstart', function(e) {
+      if (!lightboxPanEnabled || !lightboxOpen) return;
+      touchStartY = e.touches[0].clientY;
+      touchStartImgY = gsap.getProperty(lightboxImg, 'y') || 0;
+    }, { passive: true });
+    lightbox.addEventListener('touchmove', function(e) {
+      if (!lightboxPanEnabled || !lightboxOpen) return;
+      var vh = window.innerHeight;
+      var imgH = lightboxImg.offsetHeight;
+      if (imgH <= vh) return;
+      var delta = e.touches[0].clientY - touchStartY;
+      var maxShift = imgH - vh;
+      var newY = Math.max(-maxShift, Math.min(0, touchStartImgY + delta));
+      gsap.set(lightboxImg, { y: newY });
+    }, { passive: true });
 
   })();
   </script>
