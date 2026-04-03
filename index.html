@@ -2165,9 +2165,9 @@
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
 
-      /* Render the same solid colour fold for close — use average colour */
-      var bgColour = getAvgColour(tileObj.img);
-      renderFoldTexture(bgColour, bgColour, [], 0, 0);
+      /* Render the painting onto the fold */
+      var currentY = gsap.getProperty(lightboxImg, 'y') || 0;
+      renderImageFoldTexture(tileObj.img, currentY);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
