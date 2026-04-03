@@ -2126,9 +2126,15 @@
         }
       }, 0);
 
-      /* 2. When fold completes — atomic swap: hide WebGL, show image */
+      /* 2. When fold completes — atomic swap: hide WebGL, show image at centre */
       lightboxTl.add(function() {
         lightbox.classList.add('is-active');
+        /* Start scroll at centre of image (matching where the fold showed) */
+        var imgH = lightboxImg.offsetHeight;
+        var viewH = window.innerHeight;
+        if (imgH > viewH) {
+          gsap.set(lightboxImg, { y: -(imgH - viewH) / 2 });
+        }
         lightboxImg.style.opacity = '1';
         webglCanvas.style.visibility = 'hidden';
       }, foldDur);
