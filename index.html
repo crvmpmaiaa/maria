@@ -1224,13 +1224,14 @@
       var h = Math.round(window.innerHeight * dpr);
       offCanvas.width = w;
       offCanvas.height = h;
-      /* Draw image matching the lightbox layout: width=100%, positioned with translateY */
+      /* Draw image as cover (matching object-fit:cover in the tile) */
       var imgW = img.naturalWidth || img.width || w;
       var imgH = img.naturalHeight || img.height || h;
-      var drawW = w;
-      var drawH = (imgH / imgW) * w;
-      var dx = 0;
-      var dy = (yOffset || 0) * dpr;
+      var scale = Math.max(w / imgW, h / imgH);
+      var drawW = imgW * scale;
+      var drawH = imgH * scale;
+      var dx = (w - drawW) / 2;
+      var dy = yOffset ? (yOffset * dpr) : (h - drawH) / 2;
       offCtx.fillStyle = '#000';
       offCtx.fillRect(0, 0, w, h);
       try { offCtx.drawImage(img, dx, dy, drawW, drawH); } catch(e) {}
@@ -2161,9 +2162,8 @@
       var vw = window.innerWidth;
       var vh = window.innerHeight;
 
-      /* Re-render painting at current scroll position so fold matches what's on screen */
-      var currentY = gsap.getProperty(lightboxImg, 'y') || 0;
-      renderImageFoldTexture(tileObj.img, currentY);
+      /* Render fold with centred cover crop — matches how the tile displays the image */
+      renderImageFoldTexture(tileObj.img, 0);
       planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
       planeMat.uniforms.u_screen.value.set(vw, vh);
       planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
