@@ -469,8 +469,9 @@
       overflow: hidden;
       pointer-events: none;
       cursor: pointer;
+      visibility: hidden;
     }
-    .lightbox.is-active { pointer-events: auto; }
+    .lightbox.is-active { pointer-events: auto; visibility: visible; }
     .lightbox__img {
       position: absolute;
       left: 0; top: 0;
@@ -2164,24 +2165,38 @@
 
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
 
+      /* Calculate tile rect as inset percentages */
+      var t = (rect.top / vh) * 100;
+      var r = ((vw - rect.right) / vw) * 100;
+      var b = ((vh - rect.bottom) / vh) * 100;
+      var l = (rect.left / vw) * 100;
+
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() {
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
+          gsap.set(lightbox, { clipPath: 'inset(0)' });
           gsap.set(lightboxImg, { y: 0, opacity: 0 });
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
 
-      /* Fade out everything cleanly */
+      /* 1. Fade out caption + controls */
       lightboxTl.to(lightboxCaption, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
-      lightboxTl.to(lightboxImg, { opacity: 0, duration: 0.6, ease: 'power2.inOut' }, 0.1);
-      lightboxTl.add(function() {
-        lightbox.classList.remove('is-active');
-      }, 0.5);
+
+      /* 2. Reset image to centred position so it matches tile crop as it shrinks */
+      var imgH = lightboxImg.offsetHeight;
+      var centreY = imgH > vh ? -((imgH - vh) / 2) : 0;
+      lightboxTl.to(lightboxImg, { y: centreY, duration: 0.8, ease: 'power3.inOut' }, 0);
+
+      /* 3. Clip-path shrinks from fullscreen back to the tile rect */
+      lightboxTl.to(lightbox, {
+        clipPath: 'inset(' + t + '% ' + r + '% ' + b + '% ' + l + '%)',
+        duration: 1.2, ease: 'power3.inOut'
+      }, 0.2);
     }
 
     function navigateLightbox(dir) {
