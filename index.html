@@ -2162,56 +2162,26 @@
       var vw = window.innerWidth;
       var vh = window.innerHeight;
 
-      /* Render fold with centred cover crop — matches how the tile displays the image */
-      renderImageFoldTexture(tileObj.img, 0);
-      planeMat.uniforms.u_cardRect.value.set(rect.left, rect.top, rect.width, rect.height);
-      planeMat.uniforms.u_screen.value.set(vw, vh);
-      planeMat.uniforms.u_anchor.value.set(-vw * 0.25, vh * 0.25);
-
-      transitionProxy.progress = 1;
-      planeMat.uniforms.u_progress.value = 1;
-      planeMat.uniforms.u_opacity.value = 1;
-
       gsap.set(lightboxCloseBtn, { pointerEvents: 'none' });
-
-      var foldDur = 1.8;
 
       if (lightboxTl) lightboxTl.kill();
       lightboxTl = gsap.timeline({
         onComplete: function() {
           lightboxAnimating = false;
           lightbox.classList.remove('is-active');
-          webglCanvas.style.visibility = 'hidden';
           gsap.set(lightboxImg, { y: 0, opacity: 0 });
           if (modalName) { modalName.style.display = ''; positionNameAtCard(); }
         }
       });
 
-      /* 1. Instant swap: hide image + lightbox, show WebGL fullscreen painting */
+      /* Fade out everything cleanly */
+      lightboxTl.to(lightboxCaption, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0);
+      lightboxTl.to(lightboxImg, { opacity: 0, duration: 0.6, ease: 'power2.inOut' }, 0.1);
       lightboxTl.add(function() {
-        lightboxImg.style.opacity = '0';
-        gsap.set(lightboxImg, { y: 0 });
         lightbox.classList.remove('is-active');
-        webglCanvas.style.visibility = 'visible';
-        renderWebGL();
-      }, 0);
-
-      /* Fade out caption + controls */
-      lightboxTl.to(lightboxCaption, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0);
-      lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0);
-      lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0);
-
-      /* 2. Fold collapses back to tile — the painting folds into the tile */
-      lightboxTl.to(transitionProxy, {
-        progress: 0, duration: foldDur, ease: 'power3.inOut',
-        onUpdate: function() {
-          var liveRect = tileObj.tile.getBoundingClientRect();
-          planeMat.uniforms.u_cardRect.value.set(liveRect.left, liveRect.top, liveRect.width, liveRect.height);
-          planeMat.uniforms.u_progress.value = transitionProxy.progress;
-          renderWebGL();
-        },
-        onComplete: function() { webglCanvas.style.visibility = 'hidden'; }
-      }, 0.05);
+      }, 0.5);
     }
 
     function navigateLightbox(dir) {
