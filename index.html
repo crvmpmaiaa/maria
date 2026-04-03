@@ -513,21 +513,8 @@
       pointer-events: none;
     }
     .lightbox__close:hover { opacity: 0.6 !important; }
-    .lightbox__counter {
-      position: fixed;
-      bottom: 5rem;
-      right: 5rem;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.6rem;
-      color: #fff;
-      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-      opacity: 0;
-      z-index: 920;
-      pointer-events: none;
-    }
     @media(orientation:portrait) and (max-width:440px) {
       .lightbox__close { top: 2rem; right: 2rem; font-size: 16px; min-width: 44px; min-height: 44px; display: flex; align-items: center; }
-      .lightbox__counter { bottom: 2rem; right: 2rem; }
       .lightbox__caption { bottom: 2rem; font-size: 13px; max-width: 70vw; }
       .lightbox__img { width: 100%; min-height: 100vh; }
     }
@@ -647,7 +634,6 @@
     </div>
     <div class="lightbox__caption js-lightbox-caption"></div>
     <button class="lightbox__close js-lightbox-close font-2">Close ↙</button>
-    <div class="lightbox__counter js-lightbox-counter"></div>
 
     <!-- Modal -->
     <div class="modal js-modal">
@@ -2034,7 +2020,6 @@
     var lightboxImg = document.querySelector('.js-lightbox-img');
     var lightboxCaption = document.querySelector('.js-lightbox-caption');
     var lightboxCloseBtn = document.querySelector('.js-lightbox-close');
-    var lightboxCounter = document.querySelector('.js-lightbox-counter');
     var lightboxOpen = false;
     var lightboxTl = null;
     var lightboxAnimating = false;
@@ -2088,7 +2073,7 @@
 
       lightboxImg.src = src;
       lightboxCaption.textContent = caption;
-      lightboxCounter.textContent = (idx + 1) + ' / ' + allPaintingTiles.length;
+
 
       if (modalName) modalName.style.display = 'none';
 
@@ -2114,7 +2099,7 @@
       gsap.set(lightboxImg, { y: 0, opacity: 0 });
       gsap.set(lightboxCaption, { opacity: 0, y: 20 });
       gsap.set(lightboxCloseBtn, { opacity: 0, pointerEvents: 'none' });
-      gsap.set(lightboxCounter, { opacity: 0 });
+
 
       var foldDur = 1.8;
 
@@ -2151,7 +2136,7 @@
       /* 3. Caption + controls fade in after swap */
       lightboxTl.to(lightboxCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, foldDur + 0.05);
       lightboxTl.to(lightboxCloseBtn, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur + 0.05);
-      lightboxTl.to(lightboxCounter, { opacity: 1, duration: 0.5, ease: 'power2.out' }, foldDur + 0.1);
+
       lightboxTl.set(lightboxCloseBtn, { pointerEvents: 'auto' }, foldDur + 0.05);
     }
 
@@ -2204,7 +2189,7 @@
       /* Fade out caption + controls */
       lightboxTl.to(lightboxCaption, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0);
       lightboxTl.to(lightboxCloseBtn, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0);
-      lightboxTl.to(lightboxCounter, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0);
+
 
       /* 2. Fold collapses off the page */
       lightboxTl.to(transitionProxy, {
@@ -2232,7 +2217,6 @@
         onComplete: function() {
           lightboxImg.src = src;
           lightboxCaption.textContent = caption;
-          lightboxCounter.textContent = (newIdx + 1) + ' / ' + allPaintingTiles.length;
           gsap.to(lightbox, { background: newBg, duration: 0.4, ease: 'power2.inOut' });
           gsap.fromTo(lightboxImg,
             { opacity: 0, x: dir > 0 ? 40 : -40 },
